@@ -6,9 +6,10 @@
   "source": "https://github.com/schlosrat/ResonantOrbitCalculator",
   "version": "0.1.0",
   "version_check": "",
+  // "version_check": "https://raw.githubusercontent.com/schlosrat/ResonantOrbitCalculator/master/resonant_orbit_calculator/swinfo.json",
   "dependencies": [
     {
-      "id":  "SpaceWarp",
+      "id": "SpaceWarp",
       "version": {
         "min": "1.0.1",
         "max": "*"
@@ -16,7 +17,7 @@
     }
   ],
   "ksp2_version": {
-    "min": "0.1.0",
+    "min": "0.1.1",
     "max": "*"
   }
 }
