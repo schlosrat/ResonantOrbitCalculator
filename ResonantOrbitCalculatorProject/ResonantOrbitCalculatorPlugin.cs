@@ -15,6 +15,7 @@ using SpaceWarp.API.UI;
 using SpaceWarp.API.UI.Appbar;
 using UnityEngine;
 using static KSP.Rendering.Planets.PQSData;
+using System;
 
 namespace ResonantOrbitCalculator;
 
@@ -23,17 +24,23 @@ namespace ResonantOrbitCalculator;
 public class ResonantOrbitCalculatorPlugin : BaseSpaceWarpPlugin
 {
     // These are useful in case some other mod wants to add a dependency to this one
-    public const string ModGuid = MyPluginInfo.PLUGIN_GUID;
-    public const string ModName = MyPluginInfo.PLUGIN_NAME;
-    public const string ModVer = MyPluginInfo.PLUGIN_VERSION;
-    
-    // private bool _isWindowOpen;
-    // private Rect _windowRect;
+    public const string ModGuid = MyPluginInfo.PLUGIN_GUID;   // munix template
+    public const string ModName = MyPluginInfo.PLUGIN_NAME;   // munix template
+    public const string ModVer = MyPluginInfo.PLUGIN_VERSION; // munix template
+
+    // private bool _isWindowOpen; // munix template
+    // private Rect _windowRect;   // munix template
 
     private const string ToolbarFlightButtonID = "BTN-ResonantOrbitCalculatorFlight";
-    // private const string ToolbarOABButtonID = "BTN-ResonantOrbitCalculatorOAB";
+    // private const string ToolbarOABButtonID = "BTN-ResonantOrbitCalculatorOAB"; // munix template
 
-    public static ResonantOrbitCalculatorPlugin Instance { get; set; }
+    public static ResonantOrbitCalculatorPlugin Instance { get; set; } // munix template
+
+    // Local variables (should these be at this level?)
+    double period2; // The period of the resonant orbit
+    double resonance = 2.0/3.0; // The resonant factor relating the two orbits
+    double Ap2; // The new apoapsis
+    double Pe2; // The new periapsis
 
     // Begin MicroEngineer Hijack
     private bool showGUI = false;
@@ -64,13 +71,13 @@ public class ResonantOrbitCalculatorPlugin : BaseSpaceWarpPlugin
     private float spacingBelowPopout = 10;
 
     // public bool showSettings = false;
-    public bool diveOrbit = true;
+    public bool diveOrbit = true; // Adapt a show* variable to track if we're doing a diving orbit or not
     // public bool showOrb = true;
     // public bool showSur = true;
     // public bool showFlt = false;
-    public bool showMan = true;
+    public bool showMan = true; // Adapt a show* variable to track if we've got a maneuver setup for the orbit
     // public bool showTgt = false;
-    public bool occlusionModifiers = true;
+    public bool occlusionModifiers = true; // Adapt a show* variable to track if we're applying occlusion modifiers or not
 
     public bool popoutSettings, popoutPar, popoutOrb, popoutSur, popoutMan, popoutTgt, popoutFlt, popoutStg;
 
@@ -438,13 +445,18 @@ public class ResonantOrbitCalculatorPlugin : BaseSpaceWarpPlugin
     {
         DrawSectionHeader("Vessel", ref popoutPar, activeVessel.DisplayName);
 
+        double synchronousPeriod = activeVessel.mainBody.rotationPeriod;
+        double targetAltitude = 600000;
+        double satPeriod = (2.0 * Math.PI * Math.Pow(targetAltitude + activeVessel.mainBody.radius, 1.5)) / Math.Sqrt(activeVessel.mainBody.gravParameter);
+        Ap2 = Math.Pow((synchronousPeriod * Math.Sqrt(activeVessel.mainBody.gravParameter) / (2.0 * Math.PI)), (2.0 / 3.0));
+
         // DrawEntry("Mass", $"{activeVessel.totalMass * 1000:N0}", "kg");
         DrawEntry("Celestial Body", activeVessel.mainBody.bodyName);
         DrawEntry("Situation", SituationToString(activeVessel.Situation));
-        DrawEntry("Payloads", "3", "");
-        DrawEntry("Altitude", "600000", "m");
-        DrawEntry("Period", "600000", "s");
-        DrawEntry("Synchronous", "600000", "m");
+        DrawEntry("Payloads", "3");
+        DrawEntry("Target Altitude", $"{MetersToDistanceString(targetAltitude)}", "m");
+        DrawEntry("Period", $"{SecondsToTimeString(activeVessel.Orbit.period)}", "s");
+        DrawEntry("Synchronous Alt", $"{MetersToDistanceString(Ap2)}", "m");
         DrawEntry("Min LOS Orbit", "600000", "m");
         DrawEntry("Occlusion Modifiers", occlusionModifiers.ToString());
         if (occlusionModifiers)
@@ -464,6 +476,54 @@ public class ResonantOrbitCalculatorPlugin : BaseSpaceWarpPlugin
         //}
 
         DrawSectionEnd(popoutPar);
+    }
+
+    private void FillCurrentOrbit(int _ = 0)
+    {
+        DrawSectionHeader("Current Orbit", ref popoutOrb);
+
+        DrawEntry("Dive Orbit", diveOrbit.ToString());
+        DrawEntry("Period", $"{SecondsToTimeString(activeVessel.Orbit.period)}", "s");
+        DrawEntry("Apoapsis", $"{MetersToDistanceString(activeVessel.Orbit.ApoapsisArl)}", "m");
+        DrawEntry("Periapsis", $"{MetersToDistanceString(activeVessel.Orbit.PeriapsisArl)}", "m");
+        DrawEntry("Semi-Major Axis", $"{MetersToDistanceString(activeVessel.Orbit.semiMajorAxis)}", "m");
+        DrawEntry("Semi-Major Axis", $"{MetersToDistanceString((activeVessel.Orbit.ApoapsisArl + activeVessel.Orbit.PeriapsisArl + 2.0*activeVessel.mainBody.radius) /2.0)}", "m");
+        DrawEntry("Time to Ap.", $"{SecondsToTimeString((activeVessel.Situation == VesselSituations.Landed || activeVessel.Situation == VesselSituations.PreLaunch) ? 0f : activeVessel.Orbit.TimeToAp)}", "s");
+        DrawEntry("Time to Pe.", $"{SecondsToTimeString(activeVessel.Orbit.TimeToPe)}", "s");
+        DrawEntry("Inclination", $"{activeVessel.Orbit.inclination:N3}", "°");
+        DrawEntry("Eccentricity", $"{activeVessel.Orbit.eccentricity:N3}");
+        //double secondsToSoiTransition = activeVessel.Orbit.UniversalTimeAtSoiEncounter - GameManager.Instance.Game.UniverseModel.UniversalTime;
+        //if (secondsToSoiTransition >= 0)
+        //{
+        //    DrawEntry("SOI Trans.", SecondsToTimeString(secondsToSoiTransition), "s");
+        //}
+        DrawSectionEnd(popoutOrb);
+    }
+
+    private void FillNewOrbit(int _ = 0)
+    {
+
+        DrawSectionHeader("New Orbit", ref popoutSur, activeVessel.mainBody.bodyName);
+        // mu = activeVessel.mainBody.gravParameter;
+        period2 = resonance * activeVessel.Orbit.period;
+        Ap2 = Math.Pow((period2 * Math.Sqrt(activeVessel.mainBody.gravParameter) / (2.0 * Math.PI)), (2.0 / 3.0));
+        Pe2 = 2.0 * Ap2 - activeVessel.Orbit.ApoapsisArl;
+        DrawEntry("Period", $"{SecondsToTimeString(period2)}", "s");
+        DrawEntry("Apoapsis", $"{MetersToDistanceString(Ap2 - activeVessel.mainBody.radius)}", "m");
+        DrawEntry("Periapsis", $"{MetersToDistanceString(Pe2 - activeVessel.mainBody.radius)}", "m");
+        // DrawEntry("Semi-Major Axis", $"{MetersToDistanceString(activeVessel.Orbit.semiMajorAxis)}", "m");
+        DrawEntry("Semi-Major Axis", $"{MetersToDistanceString((Ap2 + Pe2) / 2.0)}", "m");
+
+        //DrawEntry("Situation", SituationToString(activeVessel.Situation));
+        //DrawEntry("Latitude", $"{DegreesToDMS(activeVessel.Latitude)}", activeVessel.Latitude < 0 ? "S" : "N");
+        //DrawEntry("Longitude", $"{DegreesToDMS(activeVessel.Longitude)}", activeVessel.Longitude < 0 ? "W" : "E");
+        //DrawEntry("Biome", BiomeToString(activeVessel.SimulationObject.Telemetry.SurfaceBiome));
+        //DrawEntry("Alt. MSL", MetersToDistanceString(activeVessel.AltitudeFromSeaLevel), "m");
+        //DrawEntry("Alt. AGL", MetersToDistanceString(activeVessel.AltitudeFromScenery), "m");
+        //DrawEntry("Horizontal Vel.", $"{activeVessel.HorizontalSrfSpeed:N1}", "m/s");
+        //DrawEntry("Vertical Vel.", $"{activeVessel.VerticalSrfSpeed:N1}", "m/s");
+
+        DrawSectionEnd(popoutSur);
     }
 
     //private void FillStages(int _ = 0)
@@ -502,43 +562,6 @@ public class ResonantOrbitCalculatorPlugin : BaseSpaceWarpPlugin
 
     //    DrawSectionEnd(popoutStg);
     //}
-
-    private void FillCurrentOrbit(int _ = 0)
-    {
-        DrawSectionHeader("Orbital", ref popoutOrb);
-
-        DrawEntry("Dive Orbit", diveOrbit.ToString());
-        DrawEntry("Period", $"{SecondsToTimeString(activeVessel.Orbit.period)}", "s");
-        DrawEntry("Apoapsis", $"{MetersToDistanceString(activeVessel.Orbit.ApoapsisArl)}", "m");
-        DrawEntry("Periapsis", $"{MetersToDistanceString(activeVessel.Orbit.PeriapsisArl)}", "m");
-        DrawEntry("Semi-Major Axis", $"{MetersToDistanceString(activeVessel.Orbit.SemimajorAxis)}", "m");
-        DrawEntry("Time to Ap.", $"{SecondsToTimeString((activeVessel.Situation == VesselSituations.Landed || activeVessel.Situation == VesselSituations.PreLaunch) ? 0f : activeVessel.Orbit.TimeToAp)}", "s");
-        DrawEntry("Time to Pe.", $"{SecondsToTimeString(activeVessel.Orbit.TimeToPe)}", "s");
-        DrawEntry("Inclination", $"{activeVessel.Orbit.inclination:N3}", "°");
-        DrawEntry("Eccentricity", $"{activeVessel.Orbit.eccentricity:N3}");
-        //double secondsToSoiTransition = activeVessel.Orbit.UniversalTimeAtSoiEncounter - GameManager.Instance.Game.UniverseModel.UniversalTime;
-        //if (secondsToSoiTransition >= 0)
-        //{
-        //    DrawEntry("SOI Trans.", SecondsToTimeString(secondsToSoiTransition), "s");
-        //}
-        DrawSectionEnd(popoutOrb);
-    }
-
-    private void FillNewOrbit(int _ = 0)
-    {
-        DrawSectionHeader("Surface", ref popoutSur, activeVessel.mainBody.bodyName);
-
-        DrawEntry("Situation", SituationToString(activeVessel.Situation));
-        DrawEntry("Latitude", $"{DegreesToDMS(activeVessel.Latitude)}", activeVessel.Latitude < 0 ? "S" : "N");
-        DrawEntry("Longitude", $"{DegreesToDMS(activeVessel.Longitude)}", activeVessel.Longitude < 0 ? "W" : "E");
-        DrawEntry("Biome", BiomeToString(activeVessel.SimulationObject.Telemetry.SurfaceBiome));
-        DrawEntry("Alt. MSL", MetersToDistanceString(activeVessel.AltitudeFromSeaLevel), "m");
-        DrawEntry("Alt. AGL", MetersToDistanceString(activeVessel.AltitudeFromScenery), "m");
-        DrawEntry("Horizontal Vel.", $"{activeVessel.HorizontalSrfSpeed:N1}", "m/s");
-        DrawEntry("Vertical Vel.", $"{activeVessel.VerticalSrfSpeed:N1}", "m/s");
-
-        DrawSectionEnd(popoutSur);
-    }
 
     //private void FillFlight(int _ = 0)
     //{
