@@ -54,11 +54,12 @@ public class ResonantOrbitCalculatorPlugin : BaseSpaceWarpPlugin
     private double occModVac = 0.9;             // Double Occlusion Modifier for Vacuume
     private string occModAtmStr = "0.75";       // String Occlusion Modifier for Atmosphere
     private string occModVacStr = "0.9";        // String Occlusion Modifier for Vacuume 
-    private bool nSatUp, nSatDown, nOrbUp, nOrbDown, setTgtPe, setTgtAp, setTgtSync, setTgtSemiSync;
+    private bool nSatUp, nSatDown, nOrbUp, nOrbDown, setTgtPe, setTgtAp, setTgtSync, setTgtSemiSync, setTgtMinLOS;
     private double synchronousPeriod;           // Syncronous Orbital period about the main body (not sayin its even possible...)
     private double semiSynchronousPeriod;       // Semi-Syncronous Orbital period about the main body (not sayin its even possible...)
     private double synchronousAlt;              // Syncronous Orbital altitude about the main body (not sayin its even possible...)
     private double semiSynchronousAlt;          // Semi-Syncronous Orbital altitude about the main body (not sayin its even possible...)
+    private double minLOSAlt;                   // Minimum LOS Orbit Altitude (only defined if 3 or more satellites in constelation)
 
     // Hijack from VesselRenamer
     //private bool gameInputState = true;
@@ -432,12 +433,10 @@ public class ResonantOrbitCalculatorPlugin : BaseSpaceWarpPlugin
         semiSynchronousPeriod = activeVessel.mainBody.rotationPeriod/2;
         synchronousAlt = SMACalc(synchronousPeriod);
         semiSynchronousAlt = SMACalc(semiSynchronousPeriod);
-        double minLOSAlt;
         int n, m;
 
         DrawSectionHeader("Carrier Vessel", activeVessel.DisplayName);
-        // DrawEntry("Mass", $"{activeVessel.totalMass * 1000:N0}", "kg");
-        // DrawEntry("Celestial Body", activeVessel.mainBody.bodyName);
+
         DrawEntry("Situation", String.Format("{0} {1}", SituationToString(activeVessel.Situation), activeVessel.mainBody.bodyName));
 
         DrawSectionEnd();
@@ -473,71 +472,24 @@ public class ResonantOrbitCalculatorPlugin : BaseSpaceWarpPlugin
         // Compute the minimum LOS altitude
         minLOSAlt = minLOSCalc(numSats, activeVessel.mainBody.radius, activeVessel.mainBody.hasAtmosphere);
 
-        // DrawEntry("Payloads", "3");
         DrawEntry2Button("Payloads:", ref nSatDown, "-", ref nSatUp, "+", numSatellites);
-        //GUILayout.BeginHorizontal();
-        //GUILayout.Label("Payloads: ", nameLabelStyle);
-        //GUILayout.FlexibleSpace();
-        //nSatDown = GUILayout.Button("-", ctrlBtnStyle);
-        //nSatUp   = GUILayout.Button("+", ctrlBtnStyle);
-        //// was: GUILayout.Label(value, valueLabelStyle);
-        //// GUI.SetNextControlName(resonantOrbitCalculatorInput);
-        //GUILayout.Label(numSatellites, valueLabelStyle);
-        //// numSatellites = GUILayout.TextField(numSatellites);
-        //// numSats = int.Parse(numSatellites);
-        //GUILayout.Space(35);
-        //// GUILayout.Label("", unitLabelStyle);
-        //GUILayout.EndHorizontal();
-
-        //GUILayout.Space(spacingAfterEntry);
-
         DrawEntry2Button("Deploy Orbits:", ref nOrbDown, "-", ref nOrbUp, "+", numOrbits);
-        //GUILayout.BeginHorizontal();
-        //GUILayout.Label("Deploy Orbits: ", nameLabelStyle);
-        //GUILayout.FlexibleSpace();
-        //nOrbDown = GUILayout.Button("-", ctrlBtnStyle);
-        //nOrbUp   = GUILayout.Button("+", ctrlBtnStyle);
-        //// was: GUILayout.Label(value, valueLabelStyle);
-        //// GUI.SetNextControlName(resonantOrbitCalculatorInput);
-        //GUILayout.Label(numOrbits, valueLabelStyle);
-        //// numOrbits = GUILayout.TextField(numOrbits);
-        //// numOrb = int.Parse(numOrbits);
-        //GUILayout.Space(35);
-        //// GUILayout.Label("", unitLabelStyle);
-        //GUILayout.EndHorizontal();
-        
-        //GUILayout.Space(spacingAfterEntry);
-
         DrawEntry("Orbital Resonance", resonanceStr);
         // DrawEntry("Resonance val", resonance.ToString());
 
-        // DrawEntry("Target Altitude", $"{MetersToDistanceString(targetAltitude)}", "m");
         DrawEntryTextField("Target Altitude", ref targetAltitude, "m");
         targetAlt = double.Parse(targetAltitude);
-        //GUILayout.BeginHorizontal();
-        //GUILayout.Label("Target Altitude", nameLabelStyle);
-        //GUILayout.FlexibleSpace();
-        //// was: GUILayout.Label(value, valueLabelStyle);
-        //// GUI.SetNextControlName(resonantOrbitCalculatorInput);
-        //targetAltitude = GUILayout.TextField(targetAltitude, textInputStyle);
-        //GUILayout.Space(5);
-        //GUILayout.Label("m", unitLabelStyle);
-        //GUILayout.EndHorizontal();
-        //GUILayout.Space(spacingAfterEntry);
 
         satPeriod = periodCalc(targetAlt + activeVessel.mainBody.radius);
         DrawEntry("Period", $"{SecondsToTimeString(satPeriod)}", "s");
         if (synchronousAlt > 0)
         {
-            // DrawEntry("Synchronous Alt", $"{MetersToDistanceString(synchronousAlt)}", "m");
             DrawEntryButton("Synchronous Alt", ref setTgtSync, "⦾", $"{MetersToDistanceString(synchronousAlt)}", "m");
-            // DrawEntry("Semi Synchronous Alt", $"{MetersToDistanceString(semiSynchronousAlt)}", "m");
             DrawEntryButton("Semi Synchronous Alt", ref setTgtSemiSync, "⦾", $"{MetersToDistanceString(semiSynchronousAlt)}", "m");
         }
         else if (semiSynchronousAlt > 0)
         {
             DrawEntry("Synchronous Alt", "Outside SOI");
-            // DrawEntry("Semi Synchronous Alt", $"{MetersToDistanceString(semiSynchronousAlt)}", "m");
             DrawEntryButton("Semi Synchronous Alt", ref setTgtSemiSync, "⦾", $"{MetersToDistanceString(semiSynchronousAlt)}", "m");
         }
         else
@@ -548,10 +500,10 @@ public class ResonantOrbitCalculatorPlugin : BaseSpaceWarpPlugin
         DrawEntry("SOI Alt", $"{MetersToDistanceString(activeVessel.mainBody.sphereOfInfluence)}", "m");
         if (minLOSAlt > 0)
         {
-            DrawEntry("Min LOS Orbit", $"{MetersToDistanceString(minLOSAlt)}", "m");
+            DrawEntryButton("Min LOS Orbit Alt", ref setTgtMinLOS, "⦾", $"{MetersToDistanceString(minLOSAlt)}", "m");
         } else
         {
-            DrawEntry("Min LOS Orbit", "Undefined", "m");
+            DrawEntry("Min LOS Orbit Alt", "Undefined", "m");
         }
         GUILayout.Space(5);
         GUILayout.BeginHorizontal();
@@ -560,33 +512,10 @@ public class ResonantOrbitCalculatorPlugin : BaseSpaceWarpPlugin
         GUILayout.Space(-5);
         if (occlusionModifiers)
         {
-            // DrawEntry("Occlusion Modifiers:", "");
-            // occModAtm = 0.75;
-            // occModVac = 0.9;
-            // DrawEntry("Atm", "0.75");
-            // DrawEntry("Vac", "0.9");
-
             DrawEntryTextField("Atm", ref occModAtmStr);
             occModAtm = double.Parse(occModAtmStr);
-            //GUILayout.BeginHorizontal();
-            //GUILayout.Label("Atm", nameLabelStyle);
-            //GUILayout.FlexibleSpace();
-            //occModAtmStr = GUILayout.TextField(occModAtmStr, textInputStyle);
-            //occModAtm = double.Parse(occModAtmStr);
-            //GUILayout.Space(35);
-            //GUILayout.EndHorizontal();
-            //GUILayout.Space(spacingAfterEntry);
-
             DrawEntryTextField("Vac", ref occModVacStr);
             occModVac = double.Parse(occModVacStr);
-            //GUILayout.BeginHorizontal();
-            //GUILayout.Label("Vac", nameLabelStyle);
-            //GUILayout.FlexibleSpace();
-            //occModVacStr = GUILayout.TextField(occModVacStr, textInputStyle);
-            //occModVac = double.Parse(occModVacStr);
-            //GUILayout.Space(35);
-            //GUILayout.EndHorizontal();
-            //GUILayout.Space(spacingAfterEntry);
         }
         //VesselDeltaVComponent deltaVComponent = activeVessel.VesselDeltaV;
         //if (deltaVComponent != null)
@@ -606,7 +535,7 @@ public class ResonantOrbitCalculatorPlugin : BaseSpaceWarpPlugin
 
     private void handleButtons()
     {
-        if (nSatDown || nSatUp || nOrbDown || nOrbUp || setTgtPe || setTgtAp || setTgtSync || setTgtSemiSync)
+        if (nSatDown || nSatUp || nOrbDown || nOrbUp || setTgtPe || setTgtAp || setTgtSync || setTgtSemiSync || setTgtMinLOS)
         {
             // burnParams = Vector3d.zero;
             if (nSatDown && numSats > 2)
@@ -649,6 +578,11 @@ public class ResonantOrbitCalculatorPlugin : BaseSpaceWarpPlugin
                 targetAlt = semiSynchronousAlt;
                 targetAltitude = targetAlt.ToString("0");
             }
+            else if (setTgtMinLOS)
+            {
+                targetAlt = minLOSAlt;
+                targetAltitude = targetAlt.ToString("0");
+            }
         }
     }
     
@@ -656,33 +590,25 @@ public class ResonantOrbitCalculatorPlugin : BaseSpaceWarpPlugin
     {
         DrawSectionHeader("Current Orbit");
 
-        // DrawEntry("Dive Orbit", diveOrbit.ToString());
         DrawEntry("Period", $"{SecondsToTimeString(activeVessel.Orbit.period)}", "s");
-        // DrawEntry("Apoapsis", $"{MetersToDistanceString(activeVessel.Orbit.ApoapsisArl)}", "m");
         DrawEntryButton("Apoapsis", ref setTgtAp, "⦾", $"{MetersToDistanceString(activeVessel.Orbit.ApoapsisArl)}", "m");
-        // setTgtAp = GUILayout.Button("⦾", ctrlBtnStyle);
-        // DrawEntry("Apoapsis", $"{MetersToDistanceString(activeVessel.Orbit.Apoapsis)}", "m");
-        // DrawEntry("Periapsis", $"{MetersToDistanceString(activeVessel.Orbit.PeriapsisArl)}", "m");
         DrawEntryButton("Periapsis", ref setTgtPe, "⦾", $"{MetersToDistanceString(activeVessel.Orbit.PeriapsisArl)}", "m");
-        // setTgtPe = GUILayout.Button("⦾", ctrlBtnStyle);
-        // DrawEntry("Periapsis", $"{MetersToDistanceString(activeVessel.Orbit.Periapsis)}", "m");
-        // DrawEntry("Semi-Major Axis", $"{MetersToDistanceString(activeVessel.Orbit.semiMajorAxis)}", "m");
-        // DrawEntry("Semi-Major Axis", $"{MetersToDistanceString((activeVessel.Orbit.Apoapsis + activeVessel.Orbit.Periapsis) /2.0)}", "m");
         DrawEntry("Time to Ap.", $"{SecondsToTimeString((activeVessel.Situation == VesselSituations.Landed || activeVessel.Situation == VesselSituations.PreLaunch) ? 0f : activeVessel.Orbit.TimeToAp)}", "s");
         DrawEntry("Time to Pe.", $"{SecondsToTimeString(activeVessel.Orbit.TimeToPe)}", "s");
         DrawEntry("Inclination", $"{activeVessel.Orbit.inclination:N3}", "°");
         DrawEntry("Eccentricity", $"{activeVessel.Orbit.eccentricity:N3}");
-        //double secondsToSoiTransition = activeVessel.Orbit.UniversalTimeAtSoiEncounter - GameManager.Instance.Game.UniverseModel.UniversalTime;
-        //if (secondsToSoiTransition >= 0)
-        //{
-        //    DrawEntry("SOI Trans.", SecondsToTimeString(secondsToSoiTransition), "s");
-        //}
+        double secondsToSoiTransition = activeVessel.Orbit.UniversalTimeAtSoiEncounter - GameManager.Instance.Game.UniverseModel.UniversalTime;
+        if (secondsToSoiTransition >= 0)
+        {
+            DrawEntry("SOI Trans.", SecondsToTimeString(secondsToSoiTransition), "s");
+        }
         DrawSectionEnd();
     }
 
     private void FillNewOrbit(int _ = 0)
     {
         DrawSectionHeader("Deploy Orbit");
+
         GUILayout.Space(5);
         GUILayout.BeginHorizontal();
         diveOrbit = GUILayout.Toggle(diveOrbit, "<b>Dive</b>", sectionToggleStyle);
@@ -705,22 +631,8 @@ public class ResonantOrbitCalculatorPlugin : BaseSpaceWarpPlugin
         double ce = (Ap2 - Pe2)/(Ap2 + Pe2);
         DrawEntry("Period", $"{SecondsToTimeString(xferPeriod)}", "s");
         DrawEntry("Apoapsis", $"{MetersToDistanceString(Ap2 - activeVessel.mainBody.radius)}", "m");
-        // DrawEntry("Apoapsis", $"{MetersToDistanceString(Ap2)}", "m");
         DrawEntry("Periapsis", $"{MetersToDistanceString(Pe2 - activeVessel.mainBody.radius)}", "m");
         DrawEntry("Eccentricity", ce.ToString("N3"));
-        // DrawEntry("Periapsis", $"{MetersToDistanceString(Pe2)}", "m");
-        // DrawEntry("Semi-Major Axis", $"{MetersToDistanceString(activeVessel.Orbit.semiMajorAxis)}", "m");
-        // DrawEntry("Semi-Major Axis", $"{MetersToDistanceString((Ap2 + Pe2) / 2.0)}", "m");
-
-        //DrawEntry("Situation", SituationToString(activeVessel.Situation));
-        //DrawEntry("Latitude", $"{DegreesToDMS(activeVessel.Latitude)}", activeVessel.Latitude < 0 ? "S" : "N");
-        //DrawEntry("Longitude", $"{DegreesToDMS(activeVessel.Longitude)}", activeVessel.Longitude < 0 ? "W" : "E");
-        //DrawEntry("Biome", BiomeToString(activeVessel.SimulationObject.Telemetry.SurfaceBiome));
-        //DrawEntry("Alt. MSL", MetersToDistanceString(activeVessel.AltitudeFromSeaLevel), "m");
-        //DrawEntry("Alt. AGL", MetersToDistanceString(activeVessel.AltitudeFromScenery), "m");
-        //DrawEntry("Horizontal Vel.", $"{activeVessel.HorizontalSrfSpeed:N1}", "m/s");
-        //DrawEntry("Vertical Vel.", $"{activeVessel.VerticalSrfSpeed:N1}", "m/s");
-
         double dV = burnCalc(sSMA, sSMA, 0, Ap2, SMA2, ce, activeVessel.mainBody.gravParameter);
         DrawEntry("Injection Δv", dV.ToString("N3"), "m/s");
 
@@ -730,6 +642,7 @@ public class ResonantOrbitCalculatorPlugin : BaseSpaceWarpPlugin
     private void FillManeuver(int _ = 0)
     {
         DrawSectionHeader("Maneuver");
+
         PatchedConicsOrbit newOrbit = activeVessel.Orbiter.ManeuverPlanSolver.PatchedConicsList.FirstOrDefault();
         DrawEntry("Projected Ap.", MetersToDistanceString(newOrbit.ApoapsisArl), "m");
         DrawEntry("Projected Pe.", MetersToDistanceString(newOrbit.PeriapsisArl), "m");
