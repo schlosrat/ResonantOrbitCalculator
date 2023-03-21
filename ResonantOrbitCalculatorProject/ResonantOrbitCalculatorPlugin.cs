@@ -54,7 +54,11 @@ public class ResonantOrbitCalculatorPlugin : BaseSpaceWarpPlugin
     private double occModVac = 0.9;             // Double Occlusion Modifier for Vacuume
     private string occModAtmStr = "0.75";       // String Occlusion Modifier for Atmosphere
     private string occModVacStr = "0.9";        // String Occlusion Modifier for Vacuume 
-    private bool nSatUp, nSatDown, nOrbUp, nOrbDown, setTgtPe, setTgtAp;
+    private bool nSatUp, nSatDown, nOrbUp, nOrbDown, setTgtPe, setTgtAp, setTgtSync, setTgtSemiSync;
+    private double synchronousPeriod;           // Syncronous Orbital period about the main body (not sayin its even possible...)
+    private double semiSynchronousPeriod;       // Semi-Syncronous Orbital period about the main body (not sayin its even possible...)
+    private double synchronousAlt;              // Syncronous Orbital altitude about the main body (not sayin its even possible...)
+    private double semiSynchronousAlt;          // Semi-Syncronous Orbital altitude about the main body (not sayin its even possible...)
 
     // Hijack from VesselRenamer
     //private bool gameInputState = true;
@@ -424,10 +428,10 @@ public class ResonantOrbitCalculatorPlugin : BaseSpaceWarpPlugin
 
     private void FillParameters(int _ = 0)
     {
-        double synchronousPeriod = activeVessel.mainBody.rotationPeriod;
-        double semiSynchronousPeriod = activeVessel.mainBody.rotationPeriod/2;
-        double synchronousAlt = SMACalc(synchronousPeriod);
-        double semiSynchronousAlt = SMACalc(semiSynchronousPeriod);
+        synchronousPeriod = activeVessel.mainBody.rotationPeriod;
+        semiSynchronousPeriod = activeVessel.mainBody.rotationPeriod/2;
+        synchronousAlt = SMACalc(synchronousPeriod);
+        semiSynchronousAlt = SMACalc(semiSynchronousPeriod);
         double minLOSAlt;
         int n, m;
 
@@ -525,13 +529,18 @@ public class ResonantOrbitCalculatorPlugin : BaseSpaceWarpPlugin
         DrawEntry("Period", $"{SecondsToTimeString(satPeriod)}", "s");
         if (synchronousAlt > 0)
         {
-            DrawEntry("Synchronous Alt", $"{MetersToDistanceString(synchronousAlt)}", "m");
-            DrawEntry("Semi Synchronous Alt", $"{MetersToDistanceString(semiSynchronousAlt)}", "m");
-        } else if (semiSynchronousAlt > 0)
+            // DrawEntry("Synchronous Alt", $"{MetersToDistanceString(synchronousAlt)}", "m");
+            DrawEntryButton("Synchronous Alt", ref setTgtSync, "⦾", $"{MetersToDistanceString(synchronousAlt)}", "m");
+            // DrawEntry("Semi Synchronous Alt", $"{MetersToDistanceString(semiSynchronousAlt)}", "m");
+            DrawEntryButton("Semi Synchronous Alt", ref setTgtSemiSync, "⦾", $"{MetersToDistanceString(semiSynchronousAlt)}", "m");
+        }
+        else if (semiSynchronousAlt > 0)
         {
             DrawEntry("Synchronous Alt", "Outside SOI");
-            DrawEntry("Semi Synchronous Alt", $"{MetersToDistanceString(semiSynchronousAlt)}", "m");
-        } else
+            // DrawEntry("Semi Synchronous Alt", $"{MetersToDistanceString(semiSynchronousAlt)}", "m");
+            DrawEntryButton("Semi Synchronous Alt", ref setTgtSemiSync, "⦾", $"{MetersToDistanceString(semiSynchronousAlt)}", "m");
+        }
+        else
         {
             DrawEntry("Synchronous Alt", "Outside SOI");
             DrawEntry("Semi Synchronous Alt", "Outside SOI");
@@ -597,7 +606,7 @@ public class ResonantOrbitCalculatorPlugin : BaseSpaceWarpPlugin
 
     private void handleButtons()
     {
-        if (nSatDown || nSatUp || nOrbDown || nOrbUp || setTgtPe || setTgtAp)
+        if (nSatDown || nSatUp || nOrbDown || nOrbUp || setTgtPe || setTgtAp || setTgtSync || setTgtSemiSync)
         {
             // burnParams = Vector3d.zero;
             if (nSatDown && numSats > 2)
@@ -630,9 +639,19 @@ public class ResonantOrbitCalculatorPlugin : BaseSpaceWarpPlugin
                 targetAlt = activeVessel.Orbit.ApoapsisArl;
                 targetAltitude = targetAlt.ToString("0");
             }
+            else if (setTgtSync)
+            {
+                targetAlt = synchronousAlt;
+                targetAltitude = targetAlt.ToString("0");
+            }
+            else if (setTgtSemiSync)
+            {
+                targetAlt = semiSynchronousAlt;
+                targetAltitude = targetAlt.ToString("0");
+            }
         }
     }
-
+    
     private void FillCurrentOrbit(int _ = 0)
     {
         DrawSectionHeader("Current Orbit");
