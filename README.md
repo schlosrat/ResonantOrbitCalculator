@@ -1,6 +1,6 @@
 ﻿# Resonant Orbit Calculator v0.1.2
 Calculate resonant orbits for the selected vessel and assit with setting up maneuver nodes to enter the resonant orbit
-
+![Resonant Orbital Calculator](https://i.imgur.com/uojtZfN.png)
 Making resonant orbit planning easier for Kerbal Space Program 2 one mission at a time.
 
 ## Compatibility
@@ -18,7 +18,7 @@ To see what improvements and new features are planned for this mod, you can visi
 1. Download and extract this mod into the game folder. If done correctly, you should have the following folder structure: <KSP Folder>/BepInEx/plugins/resonant_orbit_calculator.
 ## Sales Pitch
 Would you like to know just what orbit to get your craft into so it's ready to deploy a constellation of satellites? Are you in a hurry and don't want to spend time performing tedious computations involving obscure and arcane orbital mechanics equations? Well, now you can! Look no further - Resonant Orbit Calculator is at hand and ready to help you sort out your next Comm Sat deployment mission in a snap!
-![Resonant Orbital Calculator](https://i.imgur.com/uojtZfN.png)
+![Resonant Orbital Calculator UI](https://i.imgur.com/hY8y7kW.png)
 ## Marketing Materials
 With **Resonant Orbit Calculator** (ROC) by your side, you'll quickly be able to see all the important details for the **Current Orbit** your **Carrier Vessel** is in, as well as being able to plan your **Deployment Orbit**.
 
