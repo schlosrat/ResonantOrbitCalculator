@@ -18,13 +18,13 @@ To see what improvements and new features are planned for this mod, you can visi
 1. Download and extract this mod into the game folder. If done correctly, you should have the following folder structure: <KSP Folder>/BepInEx/plugins/resonant_orbit_calculator.
 ## Sales Pitch
 Would you like to know just what orbit to get your craft into so it's ready to deploy a constellation of satellites? Are you in a hurry and don't want to spend time performing tedious computations involving obscure and arcane orbital mechanics equations? Well, now you can! Look no further - Resonant Orbit Calculator is at hand and ready to help you sort out your next Comm Sat deployment mission in a snap!
-![Resonant Orbital Calculator](https://i.imgur.com/GyUCRZ5.png)
+![Resonant Orbital Calculator](https://i.imgur.com/uojtZfN.png)
 ## Marketing Materials
 With **Resonant Orbit Calculator** (ROC) by your side, you'll quickly be able to see all the important details for the **Current Orbit** your **Carrier Vessel** is in, as well as being able to plan your **Deployment Orbit**.
 
 No matter if your deploying 2 **Payloads** or 52, the ROC will get you all set up with everything you need to know. Just click the **(-)** and **(+)** buttons next to the number of satellites you're carrying and you'll be off to the races!
 
-Would you like to only deploy a satellite once every 2nd or 3rd or 27th pass? We've got you covered there, too! Just click away to quickly set your **Deploy Orbits** from 1 each pass on up to whatever you need! The ROC will even tell you exactly what **Orbital Resonance** factor will be needed to execute your plan!
+Would you like to only deploy a satellite once every 2nd or 3rd or 27th pass? We've got you covered there, too! Just click away with the **(-)** and **(+)** buttons to quickly set your **Deploy Orbits** from 1 each pass on up to whatever you need! The ROC will even tell you exactly what **Orbital Resonance** factor will be needed to execute your plan!
 
 Have you got a specific **Target Altitude** you need your satellites in? There's a handy spot right there ready for you enter any value you like, and you'll instantly be able to see the orbital period your deployed sats will have (assuming circular orbits).
 
