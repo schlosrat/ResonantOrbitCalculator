@@ -32,7 +32,7 @@ What if you want to set your satellites up so they're in **Synchronous** or **Se
 
 If you're seeing the dreaded *Outside SOI* warning for either of these, then don't fret! The **SOI Alt** is also displayed so you'll now what the max is!
 
-But what if you don't care about the max and are more interested in the **Minimum LOS Orbit**? We've got you covered there, too! *(For constellation with 3 or more satellites only...)*. You'll find a handy *Set Target Altitude* button **⦾** here too! You can even account for **Occlusion** due to a planet's atmosphere (if it's got one). Toggle Occlusion on will allow you to set the **Atm** and **Vac** factors to apply, and will automatically apply the appropriate one for the body you're orbitting to set the Min LOS Orbit altitude accordingly.
+But what if you don't care about the max and are more interested in the **Minimum LOS Orbit Alt**? We've got you covered there, too! *(For constellation with 3 or more satellites only...)*. You'll find a handy *Set Target Altitude* button **⦾** here too! You can even account for **Occlusion** due to a planet's atmosphere (if it's got one). Toggle Occlusion on will allow you to set the **Atm** and **Vac** factors to apply, and will automatically apply the appropriate one for the body you're orbitting to set the Min LOS Orbit altitude accordingly.
 
 What if you'd just like to target your **Current Orbit's Apoapsis** or **Periapsis** for deployment operations? There are handy *Set Target Altitude* buttons **⦾** right beside your **Apoapsis** (used for diving resonant orbits) and **Periapsis** (for climbing resonant orbits).
 
