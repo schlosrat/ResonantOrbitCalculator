@@ -45,3 +45,5 @@ What about getting your craft into the Deployment Orbit? Just add a maneuver nod
 ## Links
 * SpaceDock: https://spacedock.info/mod/3332/Resonant%20Orbit%20Calculator
 * Forum: https://forum.kerbalspaceprogram.com/index.php?/topic/215650-resonant-orbit-calculator/
+* Example Rocket (shown above): https://forum.kerbalspaceprogram.com/index.php?/topic/213170-commsat-deployer/
+The CommSat Deployer forum post includes detailed notes about how to stack satelites inside a fairing using a combination of engine mounts, Clamp-o-Tron Jr's and tiny decouplers.
