@@ -95,7 +95,7 @@ public class ResonantOrbitCalculatorPlugin : BaseSpaceWarpPlugin
 
     public bool diveOrbit = true; // Adapt a show* variable to track if we're doing a diving orbit or not
     public bool occlusionModifiers = true; // Adapt a show* variable to track if we're applying occlusion modifiers or not
-    public bool showMan = true; // Adapt a show* variable to track if we've got a maneuver setup for the orbit
+    // public bool showMan = true; // Adapt a show* variable to track if we've got a maneuver setup for the orbit
 
     public bool popoutSettings, popoutPar, popoutOrb, popoutSur, popoutMan, popoutTgt, popoutFlt, popoutStg;
 
@@ -404,16 +404,16 @@ public class ResonantOrbitCalculatorPlugin : BaseSpaceWarpPlugin
         //// GUILayout.Space(26);
         //GUILayout.EndHorizontal();
 
-        GUILayout.Space(-3);
+        //GUILayout.Space(-3);
 
-        GUILayout.BeginHorizontal();
-        GUILayout.EndHorizontal();
+        //GUILayout.BeginHorizontal();
+        //GUILayout.EndHorizontal();
 
         FillParameters();
         FillCurrentOrbit();
         FillNewOrbit();
 
-        if (showMan && currentManeuver != null)
+        if (currentManeuver != null)
         {
             FillManeuver();
         }
@@ -505,11 +505,12 @@ public class ResonantOrbitCalculatorPlugin : BaseSpaceWarpPlugin
         {
             DrawEntry("Min LOS Orbit Alt", "Undefined", "m");
         }
-        GUILayout.Space(5);
-        GUILayout.BeginHorizontal();
-        occlusionModifiers = GUILayout.Toggle(occlusionModifiers, "<b>Occlusion</b>", sectionToggleStyle);
-        GUILayout.EndHorizontal();
-        GUILayout.Space(-5);
+        DrawSoloToggle("<b>Occlusion</b>", ref occlusionModifiers);
+        //GUILayout.Space(5);
+        //GUILayout.BeginHorizontal();
+        //occlusionModifiers = GUILayout.Toggle(occlusionModifiers, "<b>Occlusion</b>", sectionToggleStyle);
+        //GUILayout.EndHorizontal();
+        //GUILayout.Space(-5);
         if (occlusionModifiers)
         {
             DrawEntryTextField("Atm", ref occModAtmStr);
@@ -609,11 +610,12 @@ public class ResonantOrbitCalculatorPlugin : BaseSpaceWarpPlugin
     {
         DrawSectionHeader("Deploy Orbit");
 
-        GUILayout.Space(5);
-        GUILayout.BeginHorizontal();
-        diveOrbit = GUILayout.Toggle(diveOrbit, "<b>Dive</b>", sectionToggleStyle);
-        GUILayout.EndHorizontal();
-        GUILayout.Space(-5);
+        DrawSoloToggle("<b>Dive</b>", ref diveOrbit);
+        //GUILayout.Space(5);
+        //GUILayout.BeginHorizontal();
+        //diveOrbit = GUILayout.Toggle(diveOrbit, "<b>Dive</b>", sectionToggleStyle);
+        //GUILayout.EndHorizontal();
+        //GUILayout.Space(-5);
 
         // period1 = periodCalc(targetAlt + activeVessel.mainBody.radius);
         xferPeriod = resonance * satPeriod;
@@ -729,6 +731,15 @@ public class ResonantOrbitCalculatorPlugin : BaseSpaceWarpPlugin
     //    }
     //    DrawSectionEnd(popoutTgt);
     //}
+
+    private void DrawSoloToggle(string sectionNamem, ref bool toggle)
+    {
+        GUILayout.Space(5);
+        GUILayout.BeginHorizontal();
+        toggle = GUILayout.Toggle(toggle, sectionNamem, sectionToggleStyle);
+        GUILayout.EndHorizontal();
+        GUILayout.Space(-5);
+    }
 
     private void DrawSectionHeader(string sectionName, string value = "") // was (string sectionName, ref bool isPopout, string value = "")
     {
