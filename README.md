@@ -41,6 +41,7 @@ When it comes time to set up your **Deployment Orbit**, you've got an option to 
 Your choice for Diving or Climbing doesn't just impact opportunities for lithobraking and SOI escape, you'll also be able to quickly see the required **Injection ∆v** your satellites will need to supply in order to circularize their orbits when you release them! This is not to be confused with whatever ∆v you may need to get your Carrier Vessel into the deployment orbit, but this does need to be accounted for so that you'll know your satellites are prepared to complete their own circularization when you deploy them!
 
 What about getting your craft into the Deployment Orbit? Just add a maneuver node to your current orbit and you'll be able to see where it's taking you in the **Maneuver** section! You can quickly get set up with a new Apoapsis or Periapsis that works for your plan to either perform a diving or climbing resonance respectively. Once that's set, you'll be able to use the Maneuver section once again to help you plan the next maneuver node to complete things and put you in the resonant orbit of your dreams!
+
 ![Resonant Orbital Calculator with Maneuver Node](https://i.imgur.com/zdYNNVt.png)
 ## Links
 * SpaceDock: https://spacedock.info/mod/3332/Resonant%20Orbit%20Calculator
