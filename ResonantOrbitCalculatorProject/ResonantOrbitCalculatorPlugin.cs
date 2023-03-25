@@ -16,7 +16,8 @@ using SpaceWarp.API.UI.Appbar;
 using UnityEngine;
 using static KSP.Rendering.Planets.PQSData;
 using System;
-
+using BepInEx.Configuration;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace ResonantOrbitCalculator;
 
@@ -29,8 +30,10 @@ public class ResonantOrbitCalculatorPlugin : BaseSpaceWarpPlugin
     public const string ModName = MyPluginInfo.PLUGIN_NAME;   // munix template
     public const string ModVer = MyPluginInfo.PLUGIN_VERSION; // munix template
 
-    // private bool _isWindowOpen; // munix template
-    // private Rect _windowRect;   // munix template
+    // Configuration parameters
+    public bool dive { get; private set; }
+    public bool occlusion { get; private set; }
+    // private ConfigEntry<bool> dive, occlusion;
 
     private const string ToolbarFlightButtonID = "BTN-ResonantOrbitCalculatorFlight";
     // private const string ToolbarOABButtonID = "BTN-ResonantOrbitCalculatorOAB"; // munix template
@@ -93,8 +96,8 @@ public class ResonantOrbitCalculatorPlugin : BaseSpaceWarpPlugin
     private int spacingAfterSection = 5;
     // private float spacingBelowPopout = 10;
 
-    public bool diveOrbit = true; // Adapt a show* variable to track if we're doing a diving orbit or not
-    public bool occlusionModifiers = true; // Adapt a show* variable to track if we're applying occlusion modifiers or not
+    public bool diveOrbit; // Adapt a show* variable to track if we're doing a diving orbit or not
+    public bool occlusionModifiers; // Adapt a show* variable to track if we're applying occlusion modifiers or not
     // public bool showMan = true; // Adapt a show* variable to track if we've got a maneuver setup for the orbit
 
     public bool popoutSettings, popoutPar, popoutOrb, popoutSur, popoutMan, popoutTgt, popoutFlt, popoutStg;
@@ -175,47 +178,30 @@ public class ResonantOrbitCalculatorPlugin : BaseSpaceWarpPlugin
             fontSize = 8
         };
 
-        //saveLoadBtnStyle = new GUIStyle(_spaceWarpUISkin.button)
-        //{
-        //    alignment = TextAnchor.MiddleCenter
-        //};
-
         closeBtnRect = new Rect(windowWidth - 23, 6, 16, 16);
 
         // tableHeaderLabelStyle = new GUIStyle(nameLabelStyle) { alignment = TextAnchor.MiddleRight };
 
-        // Register Flight AppBar button (from munix template)
+        // Register Flight AppBar button
         Appbar.RegisterAppButton(
             "Resonant Orbit Calc.",
             ToolbarFlightButtonID,
             AssetManager.GetAsset<Texture2D>($"{SpaceWarpMetadata.ModID}/images/icon.png"),
             // Toggle the GUI the MicroEngineer way
             delegate { showGUI = !showGUI; }
-            // Toggle the GUI the munix way
-            //isOpen =>
-            //{
-            //    _isWindowOpen = isOpen;
-            //    GameObject.Find(ToolbarFlightButtonID)?.GetComponent<UIValue_WriteBool_Toggle>()?.SetValue(isOpen);
-            //}
         );
 
-        //// Register OAB AppBar Button (from munix template - not needed in this mod)
+        //// Register OAB AppBar Button (not needed in this mod)
         //Appbar.RegisterOABAppButton(
         //    "Resonant Orbit Calculator",
         //    ToolbarOABButtonID,
         //    AssetManager.GetAsset<Texture2D>($"{SpaceWarpMetadata.ModID}/images/icon.png"),
-        //    isOpen =>
-        //    {
-        //        _isWindowOpen = isOpen;
-        //        GameObject.Find(ToolbarOABButtonID)?.GetComponent<UIValue_WriteBool_Toggle>()?.SetValue(isOpen);
-        //    }
+        //    delegate { showGUI = !showGUI; }
         //);
 
 
         InitializeRects();
         ResetLayout();
-        // load window positions and states from disk, if file exists
-        // LoadLayoutState();
 
         // End Hijack from MicroEngineer
 
@@ -234,14 +220,23 @@ public class ResonantOrbitCalculatorPlugin : BaseSpaceWarpPlugin
         //    }
         //}
         //catch (Exception e) {}
-        
+
         // Put MicroEngineer-like layout state info into the configuration values?
         // Fetch a configuration value or create a default one if it does not exist
-        var defaultValue = "my_value";
-        var configValue = Config.Bind<string>("Settings section", "Option 1", defaultValue, "Option description");
-        
+        var defaultValue = true;
+        var diveConfig = Config.Bind<bool>("Settings section", "Diving Resonant Transfer Orbit", defaultValue, "Use a diving (vs. climbing) resonant transfer orbit");
+        var occlusionConfig = Config.Bind<bool>("Settings section", "Occlusion Modifiers", defaultValue, "Apply Occlusion modifiers for Min LOS Orbit Altitude");
+
+        dive = diveConfig.Value;
+        occlusion = occlusionConfig.Value;
+
         // Log the config value into <KSP2 Root>/BepInEx/LogOutput.log
-        Logger.LogInfo($"Option 1: {configValue.Value}");
+        Logger.LogInfo($"Dive: {dive}");
+        Logger.LogInfo($"Occlusion: {occlusion}");
+
+        diveOrbit = dive;
+        occlusionModifiers = occlusion;
+
     }
 
     private void InitializeRects() // Hijacked from MicroEngineer
@@ -264,21 +259,6 @@ public class ResonantOrbitCalculatorPlugin : BaseSpaceWarpPlugin
     /// </summary>
     private void OnGUI() // Adapted from MicroEngineer
     {
-        //// Set the UI
-        //GUI.skin = Skins.ConsoleSkin;
-
-        //if (_isWindowOpen)
-        //{
-        //    _windowRect = GUILayout.Window(
-        //        GUIUtility.GetControlID(FocusType.Passive),
-        //        _windowRect,
-        //        FillWindow,
-        //        "Resonant Orbit Calculator",
-        //        GUILayout.Height(350),
-        //        GUILayout.Width(350)
-        //    );
-        //}
-
         // begin MicroEngineer Hijack
         activeVessel = GameManager.Instance?.Game?.ViewController?.GetActiveVehicle(true)?.GetSimVessel(true);
         if (!showGUI || activeVessel == null) return;
@@ -396,19 +376,6 @@ public class ResonantOrbitCalculatorPlugin : BaseSpaceWarpPlugin
 
         GUILayout.Space(10);
 
-        // NOTE: Repurpose toggle buttons for ROC controls
-        //GUILayout.BeginHorizontal();
-        //diveOrbit = GUILayout.Toggle(diveOrbit, "<b>Dive</b>", sectionToggleStyle);
-        //GUILayout.Space(40);
-        //occlusionModifiers = GUILayout.Toggle(occlusionModifiers, "<b>Occlusion</b>", sectionToggleStyle);
-        //// GUILayout.Space(26);
-        //GUILayout.EndHorizontal();
-
-        //GUILayout.Space(-3);
-
-        //GUILayout.BeginHorizontal();
-        //GUILayout.EndHorizontal();
-
         FillParameters();
         FillCurrentOrbit();
         FillNewOrbit();
@@ -506,11 +473,6 @@ public class ResonantOrbitCalculatorPlugin : BaseSpaceWarpPlugin
             DrawEntry("Min LOS Orbit Alt", "Undefined", "m");
         }
         DrawSoloToggle("<b>Occlusion</b>", ref occlusionModifiers);
-        //GUILayout.Space(5);
-        //GUILayout.BeginHorizontal();
-        //occlusionModifiers = GUILayout.Toggle(occlusionModifiers, "<b>Occlusion</b>", sectionToggleStyle);
-        //GUILayout.EndHorizontal();
-        //GUILayout.Space(-5);
         if (occlusionModifiers)
         {
             DrawEntryTextField("Atm", ref occModAtmStr);
@@ -518,16 +480,6 @@ public class ResonantOrbitCalculatorPlugin : BaseSpaceWarpPlugin
             DrawEntryTextField("Vac", ref occModVacStr);
             occModVac = double.Parse(occModVacStr);
         }
-        //VesselDeltaVComponent deltaVComponent = activeVessel.VesselDeltaV;
-        //if (deltaVComponent != null)
-        //{
-        //    DrawEntry("∆v", $"{deltaVComponent.TotalDeltaVActual:N0}", "m/s");
-        //    if (deltaVComponent.StageInfo.FirstOrDefault()?.DeltaVinVac > 0.0001 || deltaVComponent.StageInfo.FirstOrDefault()?.DeltaVatASL > 0.0001)
-        //    {
-        //        DrawEntry("Thrust", $"{deltaVComponent.StageInfo.FirstOrDefault()?.ThrustActual * 1000:N0}", "N");
-        //        DrawEntry("TWR", $"{deltaVComponent.StageInfo.FirstOrDefault()?.TWRActual:N2}");
-        //    }
-        //}
 
         DrawSectionEnd();
 
@@ -611,11 +563,6 @@ public class ResonantOrbitCalculatorPlugin : BaseSpaceWarpPlugin
         DrawSectionHeader("Deploy Orbit");
 
         DrawSoloToggle("<b>Dive</b>", ref diveOrbit);
-        //GUILayout.Space(5);
-        //GUILayout.BeginHorizontal();
-        //diveOrbit = GUILayout.Toggle(diveOrbit, "<b>Dive</b>", sectionToggleStyle);
-        //GUILayout.EndHorizontal();
-        //GUILayout.Space(-5);
 
         // period1 = periodCalc(targetAlt + activeVessel.mainBody.radius);
         xferPeriod = resonance * satPeriod;
@@ -655,82 +602,6 @@ public class ResonantOrbitCalculatorPlugin : BaseSpaceWarpPlugin
 
         DrawSectionEnd();
     }
-
-    //private void FillStages(int _ = 0)
-    //{
-    //    DrawStagesHeader(ref popoutStg);
-
-    //    List<DeltaVStageInfo> stages = activeVessel.VesselDeltaV?.StageInfo;
-
-    //    int stageCount = stages?.Count ?? 0;
-    //    if (stages != null && stageCount > 0)
-    //    {
-    //        float highestTwr = Mathf.Floor(stages.Max(stage => stage.TWRActual));
-    //        int preDecimalDigits = Mathf.FloorToInt(Mathf.Log10(highestTwr)) + 1;
-    //        string twrFormatString = "N2";
-
-    //        if (preDecimalDigits == 3)
-    //        {
-    //            twrFormatString = "N1";
-    //        }
-    //        else if (preDecimalDigits == 4)
-    //        {
-    //            twrFormatString = "N0";
-    //        }
-
-    //        for (int i = stages.Count - 1; i >= 0; i--)
-    //        {
-
-    //            DeltaVStageInfo stageInfo = stages[i];
-    //            if (stageInfo.DeltaVinVac > 0.0001 || stageInfo.DeltaVatASL > 0.0001)
-    //            {
-    //                int stageNum = stageCount - stageInfo.Stage;
-    //                DrawStageEntry(stageNum, stageInfo, twrFormatString);
-    //            }
-    //        }
-    //    }
-
-    //    DrawSectionEnd(popoutStg);
-    //}
-
-    //private void FillFlight(int _ = 0)
-    //{
-    //    DrawSectionHeader("Flight", ref popoutFlt);
-
-    //    DrawEntry("Speed", $"{activeVessel.SurfaceVelocity.magnitude:N1}", "m/s");
-    //    DrawEntry("Mach Number", $"{activeVessel.SimulationObject.Telemetry.MachNumber:N2}");
-    //    DrawEntry("Atm. Density", $"{activeVessel.SimulationObject.Telemetry.AtmosphericDensity:N3}", "g/L");
-    //    GetAeroStats();
-
-    //    DrawEntry("Total Lift", $"{totalLift * 1000:N0}", "N");
-    //    DrawEntry("Total Drag", $"{totalDrag * 1000:N0}", "N");
-
-    //    DrawEntry("Lift / Drag", $"{totalLift / totalDrag:N3}");
-
-    //    DrawSectionEnd(popoutFlt);
-    //}
-
-    //private void FillTarget(int _ = 0)
-    //{
-    //    DrawSectionHeader("Target", ref popoutTgt, currentTarget.DisplayName);
-
-    //    if (currentTarget.Orbit != null)
-    //    {
-    //        DrawEntry("Target Ap.", MetersToDistanceString(currentTarget.Orbit.ApoapsisArl), "m");
-    //        DrawEntry("Target Pe.", MetersToDistanceString(currentTarget.Orbit.PeriapsisArl), "m");
-
-    //        if (activeVessel.Orbit.referenceBody == currentTarget.Orbit.referenceBody)
-    //        {
-    //            double distanceToTarget = (activeVessel.Orbit.Position - currentTarget.Orbit.Position).magnitude;
-    //            DrawEntry("Distance", MetersToDistanceString(distanceToTarget), "m");
-    //            double relativeVelocity = (activeVessel.Orbit.relativeVelocity - currentTarget.Orbit.relativeVelocity).magnitude;
-    //            DrawEntry("Rel. Speed", $"{relativeVelocity:N1}", "m/s");
-    //            OrbitTargeter targeter = activeVessel.Orbiter.OrbitTargeter;
-    //            DrawEntry("Rel. Incl.", $"{targeter.AscendingNodeTarget.Inclination:N3}", "°");
-    //        }
-    //    }
-    //    DrawSectionEnd(popoutTgt);
-    //}
 
     private void DrawSoloToggle(string sectionNamem, ref bool toggle)
     {
@@ -936,53 +807,4 @@ public class ResonantOrbitCalculatorPlugin : BaseSpaceWarpPlugin
         showGUI = false;
     }
 
-    //private void SaveLayoutState()
-    //{
-    //    LayoutState state = new(this);
-    //    state.Save();
-    //}
-
-    //private void LoadLayoutState()
-    //{
-    //    LayoutState state = LayoutState.Load();
-
-    //    if (state != null)
-    //    {
-    //        showSettings = false;
-    //        diveOrbit = state.ShowVes;
-    //        showOrb = state.ShowOrb;
-    //        showSur = state.ShowSur;
-    //        showFlt = state.ShowFlt;
-    //        showMan = state.ShowMan;
-    //        showTgt = state.ShowTgt;
-    //        occlusionModifiers = state.ShowStg;
-    //        popoutSettings = state.IsPopoutSettings;
-    //        popoutPar = state.IsPopoutVes;
-    //        popoutOrb = state.IsPopoutOrb;
-    //        popoutSur = state.IsPopoutSur;
-    //        popoutFlt = state.IsPopOutFlt;
-    //        popoutMan = state.IsPopOutMan;
-    //        popoutTgt = state.IsPopOutTgt;
-    //        popoutStg = state.IsPopOutStg;
-    //        mainGuiRect.position = state.MainGuiPosition;
-    //        settingsGuiRect.position = state.SettingsPosition;
-    //        parGuiRect.position = state.VesPosition;
-    //        orbGuiRect.position = state.OrbPosition;
-    //        surGuiRect.position = state.SurPosition;
-    //        fltGuiRect.position = state.FltPosition;
-    //        manGuiRect.position = state.ManPosition;
-    //        tgtGuiRect.position = state.TgtPosition;
-    //        stgGuiRect.position = state.StgPosition;
-    //    }
-    //}
-
-    /// <summary>
-    /// Defines the content of the UI window drawn in the <code>OnGui</code> method.
-    /// </summary>
-    /// <param name="windowID"></param>
-    //private static void FillWindow(int windowID)
-    //{
-    //    GUILayout.Label("Resonant Orbit Calculator");
-    //    GUI.DragWindow(new Rect(0, 0, 10000, 500));
-    //}
 }
