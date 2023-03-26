@@ -17,7 +17,7 @@ using UnityEngine;
 using static KSP.Rendering.Planets.PQSData;
 using System;
 using BepInEx.Configuration;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
+// using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace ResonantOrbitCalculator;
 
@@ -803,7 +803,8 @@ public class ResonantOrbitCalculatorPlugin : BaseSpaceWarpPlugin
 
     private void CloseWindow()
     {
-        GameObject.Find("BTN-MicroEngineerBtn")?.GetComponent<UIValue_WriteBool_Toggle>()?.SetValue(false);
+        GameObject.Find("BTN-ResonantOrbitCalculatorFlight")?.GetComponent<UIValue_WriteBool_Toggle>()?.SetValue(false);
+        GameObject.Find("BTN-ResonantOrbitCalculatorOAB")?.GetComponent<UIValue_WriteBool_Toggle>()?.SetValue(false);
         showGUI = false;
     }
 
