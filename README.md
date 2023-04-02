@@ -1,4 +1,4 @@
-﻿# Resonant Orbit Calculator v0.1.2
+﻿# Resonant Orbit Calculator
 Calculate resonant orbits for the selected vessel and assit with setting up maneuver nodes to enter the resonant orbit
 ![Resonant Orbital Calculator](https://i.imgur.com/uojtZfN.png)
 Making resonant orbit planning easier for Kerbal Space Program 2 one mission at a time.
