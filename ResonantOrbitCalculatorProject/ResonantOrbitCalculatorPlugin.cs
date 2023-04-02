@@ -30,6 +30,10 @@ public class ResonantOrbitCalculatorPlugin : BaseSpaceWarpPlugin
     public const string ModName = MyPluginInfo.PLUGIN_NAME;   // munix template
     public const string ModVer = MyPluginInfo.PLUGIN_VERSION; // munix template
 
+    // Control game input state while user has clicked into a TextField.
+    private bool gameInputState = true;
+    public List<String> inputFields = new List<String>();
+
     // Configuration parameters
     public bool dive { get; private set; }
     public bool occlusion { get; private set; }
@@ -115,6 +119,11 @@ public class ResonantOrbitCalculatorPlugin : BaseSpaceWarpPlugin
     {
         base.OnInitialized();
         // game = GameManager.Instance.Game;
+
+        // Setup the list of input field names (most are the same as the entry string text displayed in the GUI window)
+        inputFields.Add("Target Altitude");
+        inputFields.Add("Atm");
+        inputFields.Add("Vac");
 
         Instance = this;
 
@@ -259,42 +268,46 @@ public class ResonantOrbitCalculatorPlugin : BaseSpaceWarpPlugin
     /// </summary>
     private void OnGUI() // Adapted from MicroEngineer
     {
-        // begin MicroEngineer Hijack
         activeVessel = GameManager.Instance?.Game?.ViewController?.GetActiveVehicle(true)?.GetSimVessel(true);
-        if (!showGUI || activeVessel == null) return;
+        if (showGUI && activeVessel != null)
+        {
+            currentTarget = activeVessel.TargetObject;
+            currentManeuver = GameManager.Instance?.Game?.SpaceSimulation.Maneuvers.GetNodesForVessel(activeVessel.GlobalId).FirstOrDefault();
+            GUI.skin = _spaceWarpUISkin;
 
-        currentTarget = activeVessel.TargetObject;
-        currentManeuver = GameManager.Instance?.Game?.SpaceSimulation.Maneuvers.GetNodesForVessel(activeVessel.GlobalId).FirstOrDefault();
-        GUI.skin = _spaceWarpUISkin;
+            mainGuiRect = GUILayout.Window(
+                GUIUtility.GetControlID(FocusType.Passive),
+                mainGuiRect,
+                FillMainGUI,
+                "<color=#696DFF>// RESONANT ORBIT CALC</color>",
+                mainWindowStyle,
+                GUILayout.Height(0)
+            );
+            mainGuiRect.position = ClampToScreen(mainGuiRect.position, mainGuiRect.size);
 
-        mainGuiRect = GUILayout.Window(
-            GUIUtility.GetControlID(FocusType.Passive),
-            mainGuiRect,
-            FillMainGUI,
-            "<color=#696DFF>// RESONANT ORBIT CALC</color>",
-            mainWindowStyle,
-            GUILayout.Height(0)
-        );
-        mainGuiRect.position = ClampToScreen(mainGuiRect.position, mainGuiRect.size);
+            if (gameInputState && inputFields.Contains(GUI.GetNameOfFocusedControl()))
+            {
+                Logger.LogInfo($"[Flight Plan]: Disabling Game Input: Focused Item '{GUI.GetNameOfFocusedControl()}'");
+                gameInputState = false;
+                GameManager.Instance.Game.Input.Disable();
+            }
+            else if (!gameInputState && !inputFields.Contains(GUI.GetNameOfFocusedControl()))
+            {
+                Logger.LogInfo($"[Flight Plan]: Enabling Game Input: FYI, Focused Item '{GUI.GetNameOfFocusedControl()}'");
+                gameInputState = true;
+                GameManager.Instance.Game.Input.Enable();
+            }
 
-        // End Microengineer Hijack
-
-        // Begin VesselRenamer Hijack
-        // Prevent inputs to this mod from passing through to the game
-        //if (gameInputState && GUI.GetNameOfFocusedControl().Equals(resonantOrbitCalculatorInput))
-        //{
-        //    gameInputState = false;
-        //    GameManager.Instance.Game.Input.Flight.Disable();
-        //}
-
-        //// Allow inputs to the game
-        //if (!gameInputState && !GUI.GetNameOfFocusedControl().Equals(resonantOrbitCalculatorInput))
-        //{
-        //    gameInputState = true;
-        //    GameManager.Instance.Game.Input.Flight.Enable();
-        //}
-        // End VesselRenamer Hijack
-
+        }
+        else
+        {
+            if (!gameInputState)
+            {
+                Logger.LogInfo($"[Flight Plan]: Enabling Game Input due to GUI disabled: FYI, Focused Item '{GUI.GetNameOfFocusedControl()}'");
+                gameInputState = true;
+                GameManager.Instance.Game.Input.Enable();
+            }
+        }
     }
 
     private Vector2 ClampToScreen(Vector2 position, Vector2 size)
@@ -309,8 +322,10 @@ public class ResonantOrbitCalculatorPlugin : BaseSpaceWarpPlugin
         double occMod;
         if (occlusionModifiers)
         {
-            occModAtm = double.Parse(occModAtmStr);
-            occModVac = double.Parse(occModVacStr);
+            try { occModAtm = double.Parse(occModAtmStr); }
+            catch { occModAtm = 1.0; }
+            try { occModVac = double.Parse(occModVacStr); }
+            catch { occModVac = 1.0; }
             if (hasAtmo)
             {
                 occMod = occModAtm;
@@ -324,7 +339,6 @@ public class ResonantOrbitCalculatorPlugin : BaseSpaceWarpPlugin
         {
             occMod = 1;
         }
-
         return occMod;
     }
 
@@ -385,11 +399,11 @@ public class ResonantOrbitCalculatorPlugin : BaseSpaceWarpPlugin
             FillManeuver();
         }
 
-        // Begin Hijack from VesselRenamer
-        //GUILayout.BeginHorizontal();
-        //string inputStateString = gameInputState ? "Enabled" : "Disabled";
-        //GUILayout.Label($"Game Input: {inputStateString}");
-        //GUILayout.EndHorizontal();
+        // Indication to User that its safe to type, or why vessel controls aren't working
+        GUILayout.BeginHorizontal();
+        string inputStateString = gameInputState ? "Enabled" : "Disabled";
+        GUILayout.Label($"Game Input: {inputStateString}");
+        GUILayout.EndHorizontal();
 
         GUI.DragWindow(new Rect(0, 0, windowWidth, windowHeight));
     }
@@ -445,7 +459,8 @@ public class ResonantOrbitCalculatorPlugin : BaseSpaceWarpPlugin
         // DrawEntry("Resonance val", resonance.ToString());
 
         DrawEntryTextField("Target Altitude", ref targetAltitude, "m");
-        targetAlt = double.Parse(targetAltitude);
+        try { targetAlt = double.Parse(targetAltitude); }
+        catch { targetAlt = 0; }
 
         satPeriod = periodCalc(targetAlt + activeVessel.mainBody.radius);
         DrawEntry("Period", $"{SecondsToTimeString(satPeriod)}", "s");
@@ -476,9 +491,11 @@ public class ResonantOrbitCalculatorPlugin : BaseSpaceWarpPlugin
         if (occlusionModifiers)
         {
             DrawEntryTextField("Atm", ref occModAtmStr);
-            occModAtm = double.Parse(occModAtmStr);
+            try { occModAtm = double.Parse(occModAtmStr); }
+            catch { occModAtm = 1.0; }
             DrawEntryTextField("Vac", ref occModVacStr);
-            occModVac = double.Parse(occModVacStr);
+            try { occModVac = double.Parse(occModVacStr); }
+            catch { occModVac = 1.0; }
         }
 
         DrawSectionEnd();
@@ -671,6 +688,7 @@ public class ResonantOrbitCalculatorPlugin : BaseSpaceWarpPlugin
         GUILayout.BeginHorizontal();
         GUILayout.Label(entryName, nameLabelStyle);
         GUILayout.FlexibleSpace();
+        GUI.SetNextControlName(entryName);
         textEntry = GUILayout.TextField(textEntry, textInputStyle);
         GUILayout.Space(5);
         GUILayout.Label(unit, unitLabelStyle);
@@ -806,6 +824,7 @@ public class ResonantOrbitCalculatorPlugin : BaseSpaceWarpPlugin
         GameObject.Find("BTN-ResonantOrbitCalculatorFlight")?.GetComponent<UIValue_WriteBool_Toggle>()?.SetValue(false);
         GameObject.Find("BTN-ResonantOrbitCalculatorOAB")?.GetComponent<UIValue_WriteBool_Toggle>()?.SetValue(false);
         showGUI = false;
+        GameManager.Instance.Game.Input.Enable();
     }
 
 }
