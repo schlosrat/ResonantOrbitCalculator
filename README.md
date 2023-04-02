@@ -5,17 +5,18 @@ Making resonant orbit planning easier for Kerbal Space Program 2 one mission at 
 
 ## Compatibility
 * Tested with Kerbal Space Program 2 v0.1.1.0.21572
-* Requires SpaceWarp 0.4+
+* Requires SpaceWarp 1.0.1+
 ## Features
 * Display Carrier Vessel and Current Orbit Info
 * Assist In planning Deployment Missions for constellations of 2 or more satellites deployed
 * Model Resonant Deployment Orbit
 * Display effects of the next planned Maneuver
+* Automatically disables keyboard input to the game when you've clicked into a text entry field - autmatically re-enabling game input once you've clicked anywhere else
 ## Planned Improvements
 To see what improvements and new features are planned for this mod, you can visit the Issues page on the project's GitHub.
 ## Installation
-1. Download and extract SpaceWarp into your game folder.
-1. Download and extract this mod into the game folder. If done correctly, you should have the following folder structure: <KSP Folder>/BepInEx/plugins/resonant_orbit_calculator.
+1. Install BepInEx Space Warp combo pack version 1.0.1 or later and run the game, then close it. The combo BepInEx with SpaceWarp can be found here: https://spacedock.info/mod/3277/Space%20Warp%20+%20BepInEx. Installation instructions for BepInEx+SpaceWarp are also on that page.
+1. Copy the `BepInEx` folder from this mod's ZIP file to your KSP root directory. For those who've installed via Steam this may be found at `SteamLibrary\steamapps\common\Kerbal Space Program 2\`. If done correctly, you should have the following folder structure: <KSP Folder>/BepInEx/plugins/resonant_orbit_calculator.
 ## Sales Pitch
 Would you like to know just what orbit to get your craft into so it's ready to deploy a constellation of satellites? Are you in a hurry and don't want to spend time performing tedious computations involving obscure and arcane orbital mechanics equations? Well, now you can! Look no further - Resonant Orbit Calculator is at hand and ready to help you sort out your next Comm Sat deployment mission in a snap!
 ![Resonant Orbital Calculator UI](https://i.imgur.com/hY8y7kW.png)
