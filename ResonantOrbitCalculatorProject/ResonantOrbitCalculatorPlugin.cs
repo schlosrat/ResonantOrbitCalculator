@@ -74,6 +74,7 @@ public class ResonantOrbitCalculatorPlugin : BaseSpaceWarpPlugin
 
     // Begin MicroEngineer Hijack
     private bool showGUI = false;
+    private bool GUIenabled = true;
 
     private readonly int windowWidth = 320;
     private readonly int windowHeight = 700;
@@ -126,6 +127,25 @@ public class ResonantOrbitCalculatorPlugin : BaseSpaceWarpPlugin
         inputFields.Add("Vac");
 
         Instance = this;
+
+        // Subscribe to messages that indicate it's OK to raise the GUI
+        // StateChanges.FlightViewEntered += message => GUIenabled = true;
+        // StateChanges.Map3DViewEntered += message => GUIenabled = true;
+
+        // Subscribe to messages that indicate it's not OK to raise the GUI
+        // StateChanges.FlightViewLeft += message => GUIenabled = false;
+        // StateChanges.Map3DViewLeft += message => GUIenabled = false;
+        // StateChanges.VehicleAssemblyBuilderEntered += message => GUIenabled = false;
+        // StateChanges.KerbalSpaceCenterStateEntered += message => GUIenabled = false;
+        //StateChanges.BaseAssemblyEditorEntered += message => GUIenabled = false;
+        //StateChanges.MainMenuStateEntered += message => GUIenabled = false;
+        //StateChanges.ColonyViewEntered += message => GUIenabled = false;
+        // StateChanges.TrainingCenterEntered += message => GUIenabled = false;
+        //StateChanges.MissionControlEntered += message => GUIenabled = false;
+        // StateChanges.TrackingStationEntered += message => GUIenabled = false;
+        //StateChanges.ResearchAndDevelopmentEntered += message => GUIenabled = false;
+        //StateChanges.LaunchpadEntered += message => GUIenabled = false;
+        //StateChanges.RunwayEntered += message => GUIenabled = false;
 
         // Begin Hijack from MicroEngineer
         _spaceWarpUISkin = Skins.ConsoleSkin;
@@ -268,10 +288,24 @@ public class ResonantOrbitCalculatorPlugin : BaseSpaceWarpPlugin
     /// </summary>
     private void OnGUI() // Adapted from MicroEngineer
     {
+        GUIenabled = false;
+        var gameState = Game.GlobalGameState.GetState();
+        if (gameState == GameState.Map3DView) GUIenabled = true;
+        if (gameState == GameState.FlightView) GUIenabled = true;
+        //if (Game.GlobalGameState.GetState() == GameState.TrainingCenter) GUIenabled = false;
+        //if (Game.GlobalGameState.GetState() == GameState.TrackingStation) GUIenabled = false;
+        //if (Game.GlobalGameState.GetState() == GameState.VehicleAssemblyBuilder) GUIenabled = false;
+        //// if (Game.GlobalGameState.GetState() == GameState.MissionControl) GUIenabled = false;
+        //if (Game.GlobalGameState.GetState() == GameState.Loading) GUIenabled = false;
+        //if (Game.GlobalGameState.GetState() == GameState.KerbalSpaceCenter) GUIenabled = false;
+        //if (Game.GlobalGameState.GetState() == GameState.Launchpad) GUIenabled = false;
+        //if (Game.GlobalGameState.GetState() == GameState.Runway) GUIenabled = false;
+        // activeVessel = Game?.ViewController?.GetActiveVehicle(true)?.GetSimVessel(true);
+        
         activeVessel = GameManager.Instance?.Game?.ViewController?.GetActiveVehicle(true)?.GetSimVessel(true);
-        if (showGUI && activeVessel != null)
+        if (showGUI && GUIenabled && activeVessel != null)
         {
-            currentTarget = activeVessel.TargetObject;
+            currentTarget = activeVessel?.TargetObject;
             currentManeuver = GameManager.Instance?.Game?.SpaceSimulation.Maneuvers.GetNodesForVessel(activeVessel.GlobalId).FirstOrDefault();
             GUI.skin = _spaceWarpUISkin;
 
