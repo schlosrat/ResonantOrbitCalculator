@@ -1,4 +1,4 @@
-﻿# Resonant Orbit Calculator v0.1.2
+﻿# Resonant Orbit Calculator
 Calculate resonant orbits for the selected vessel and assit with setting up maneuver nodes to enter the resonant orbit
 ![Resonant Orbital Calculator](https://i.imgur.com/uojtZfN.png)
 Making resonant orbit planning easier for Kerbal Space Program 2 one mission at a time.
@@ -11,7 +11,7 @@ Making resonant orbit planning easier for Kerbal Space Program 2 one mission at 
 * Assist In planning Deployment Missions for constellations of 2 or more satellites deployed
 * Model Resonant Deployment Orbit
 * Display effects of the next planned Maneuver
-* Automatically disables keyboard input to the game when you've clicked into a text entry field - autmatically re-enabling game input once you've clicked anywhere else
+* Automatically disables keyboard input to the game when you've clicked into a text entry field - automatically re-enabling game input once you've clicked anywhere else
 ## Planned Improvements
 To see what improvements and new features are planned for this mod, you can visit the Issues page on the project's GitHub.
 ## Installation
