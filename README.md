@@ -4,7 +4,7 @@ Calculate resonant orbits for the selected vessel and assit with setting up mane
 Making resonant orbit planning easier for Kerbal Space Program 2 one mission at a time.
 
 ## Compatibility
-* Tested with Kerbal Space Program 2 v0.1.1.0.21572
+* Tested with Kerbal Space Program 2 v0.1.2.0.22258
 * Requires SpaceWarp 1.0.1+
 ## Features
 * Display Carrier Vessel and Current Orbit Info
