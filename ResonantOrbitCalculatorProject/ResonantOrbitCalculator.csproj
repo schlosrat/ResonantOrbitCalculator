@@ -8,7 +8,7 @@
         <AssemblyName>com.github.schlosrat.resonant_orbit_calculator</AssemblyName>
         <Product>Resonant Orbit Calculator</Product>
         <Description>Calculate resonant orbits for the selected vessel and assit with setting up maneuver nodes to enter the resonant orbit</Description>
-        <Version>0.1.6</Version>
+        <Version>0.1.7</Version>
         <RestoreAdditionalProjectSources>
             https://api.nuget.org/v3/index.json;
             https://nuget.bepinex.dev/v3/index.json
