@@ -10,9 +10,8 @@
         <Description>Calculate resonant orbits for the selected vessel and assit with setting up maneuver nodes to enter the resonant orbit</Description>
         <Version>0.1.8</Version>
         <RestoreAdditionalProjectSources>
-            https://api.nuget.org/v3/index.json;
-            https://nuget.bepinex.dev/v3/index.json
-        </RestoreAdditionalProjectSources>
+			https://nuget.spacewarp.org/v3/index.json
+		</RestoreAdditionalProjectSources>
         <RootNamespace>ResonantOrbitCalculator</RootNamespace>
         <ModId Condition="'$(ModId)'==''">resonant_orbit_calculator</ModId>
         <PackageLicenseFile>license</PackageLicenseFile>
@@ -36,7 +35,7 @@
         <PackageReference Include="BepInEx.Core" Version="5.*" />
         <PackageReference Include="BepInEx.PluginInfoProps" Version="2.*" />
         <PackageReference Include="HarmonyX" Version="2.10.1" />
-        <PackageReference Include="SpaceWarp" Version="1.0.1" />
+        <PackageReference Include="SpaceWarp" Version="1.1.1" />
         <PackageReference Include="UnityEngine.Modules" Version="2020.3.33" IncludeAssets="compile" />
     </ItemGroup>
     <Target Name="PostBuild" AfterTargets="PostBuildEvent">
