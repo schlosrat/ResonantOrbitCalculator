@@ -14,6 +14,7 @@ using SpaceWarp.API.UI.Appbar;
 using System.Reflection;
 using UnityEngine;
 using static KSP.Rendering.Planets.PQSData;
+using static KSP.UI.Binding.Core.UIValue_ReadEnum_TextSet;
 // using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace ResonantOrbitCalculator;
@@ -462,7 +463,7 @@ public class ResonantOrbitCalculatorPlugin : BaseSpaceWarpPlugin
 
         DrawEntry2Button("Payloads:", ref nSatDown, "-", ref nSatUp, "+", numSatellites);
         DrawEntry2Button("Deploy Orbits:", ref nOrbDown, "-", ref nOrbUp, "+", numOrbits);
-        DrawEntry("Orbital Resonance", resonanceStr);
+        DrawEntry("Orbital Resonance", resonanceStr, " ");
         // DrawEntry("Resonance val", resonance.ToString());
 
         // Logger.LogInfo($"FillParameters: tgt_altitude_km = {target_alt_km} km");
@@ -479,13 +480,13 @@ public class ResonantOrbitCalculatorPlugin : BaseSpaceWarpPlugin
         }
         else if (semiSynchronousAlt > 0)
         {
-            DrawEntry("Synchronous Alt", "Outside SOI");
+            DrawEntry("Synchronous Alt", "Outside SOI", " ");
             DrawEntryButton("Semi Synchronous Alt", ref setTgtSemiSync, "⦾", $"{MetersToDistanceString(semiSynchronousAlt/1000)}", "km");
         }
         else
         {
-            DrawEntry("Synchronous Alt", "Outside SOI");
-            DrawEntry("Semi Synchronous Alt", "Outside SOI");
+            DrawEntry("Synchronous Alt", "Outside SOI", " ");
+            DrawEntry("Semi Synchronous Alt", "Outside SOI", " ");
         }
         DrawEntry("SOI Alt", $"{MetersToDistanceString(activeVessel.mainBody.sphereOfInfluence/1000)}", "km");
         if (minLOSAlt > 0)
@@ -588,7 +589,7 @@ public class ResonantOrbitCalculatorPlugin : BaseSpaceWarpPlugin
         DrawEntry("Time to Ap.", $"{SecondsToTimeString((activeVessel.Situation == VesselSituations.Landed || activeVessel.Situation == VesselSituations.PreLaunch) ? 0f : activeVessel.Orbit.TimeToAp)}", "s");
         DrawEntry("Time to Pe.", $"{SecondsToTimeString(activeVessel.Orbit.TimeToPe)}", "s");
         DrawEntry("Inclination", $"{activeVessel.Orbit.inclination:N3}", "°");
-        DrawEntry("Eccentricity", $"{activeVessel.Orbit.eccentricity:N3}");
+        DrawEntry("Eccentricity", $"{activeVessel.Orbit.eccentricity:N3}", " ");
         double secondsToSoiTransition = activeVessel.Orbit.UniversalTimeAtSoiEncounter - GameManager.Instance.Game.UniverseModel.UniversalTime;
         if (secondsToSoiTransition >= 0)
         {
@@ -620,7 +621,7 @@ public class ResonantOrbitCalculatorPlugin : BaseSpaceWarpPlugin
         DrawEntry("Period", $"{SecondsToTimeString(xferPeriod)}", "s");
         DrawEntry("Apoapsis", $"{MetersToDistanceString(Ap2 - activeVessel.mainBody.radius/1000)}", "km");
         DrawEntry("Periapsis", $"{MetersToDistanceString(Pe2 - activeVessel.mainBody.radius/1000)}", "km");
-        DrawEntry("Eccentricity", ce.ToString("N3"));
+        DrawEntry("Eccentricity", ce.ToString("N3"), " ");
         double dV = burnCalc(sSMA, sSMA, 0, Ap2, SMA2, ce, activeVessel.mainBody.gravParameter);
         DrawEntry("Injection Δv", dV.ToString("N3"), "m/s");
 
@@ -646,12 +647,13 @@ public class ResonantOrbitCalculatorPlugin : BaseSpaceWarpPlugin
     {
         GUILayout.Space(5);
         GUILayout.BeginHorizontal();
-        toggle = GUILayout.Toggle(toggle, sectionNamem, ROCStyles.sectionToggleStyle);
+        toggle = GUILayout.Toggle(toggle, sectionNamem, ROCStyles.toggle); // was section_toggle
+        GUILayout.FlexibleSpace();
         GUILayout.EndHorizontal();
         GUILayout.Space(-5);
     }
 
-    private void DrawSectionHeader(string sectionName, string value = "") // was (string sectionName, ref bool isPopout, string value = "")
+    private void DrawSectionHeader(string sectionName, string value = "", string units = "") // was (string sectionName, ref bool isPopout, string value = "")
     {
         GUILayout.BeginHorizontal();
         // Don't need popout buttons for ROC
@@ -659,9 +661,15 @@ public class ResonantOrbitCalculatorPlugin : BaseSpaceWarpPlugin
 
         GUILayout.Label($"<b>{sectionName}</b>");
         GUILayout.FlexibleSpace();
-        GUILayout.Label(value, ROCStyles.valueLabelStyle);
-        GUILayout.Space(5);
-        GUILayout.Label("", ROCStyles.unitLabelStyle);
+        if (value.Length > 0)
+        {
+            GUILayout.Label(value, ROCStyles.valueLabelStyle);
+            if (units.Length > 0)
+            {
+                GUILayout.Space(5);
+                GUILayout.Label(units, ROCStyles.unitLabelStyle);
+            }
+        }
         GUILayout.EndHorizontal();
         GUILayout.Space(ROCStyles.spacingAfterHeader);
     }
@@ -672,8 +680,11 @@ public class ResonantOrbitCalculatorPlugin : BaseSpaceWarpPlugin
         GUILayout.Label(entryName, ROCStyles.nameLabelStyle);
         GUILayout.FlexibleSpace();
         GUILayout.Label(value, ROCStyles.valueLabelStyle);
-        GUILayout.Space(5);
-        GUILayout.Label(unit, ROCStyles.unitLabelStyle);
+        if (unit.Length > 0)
+        {
+            GUILayout.Space(5);
+            GUILayout.Label(unit, ROCStyles.unitLabelStyle);
+        }
         GUILayout.EndHorizontal();
         GUILayout.Space(ROCStyles.spacingAfterEntry);
     }
@@ -683,7 +694,7 @@ public class ResonantOrbitCalculatorPlugin : BaseSpaceWarpPlugin
         GUILayout.BeginHorizontal();
         GUILayout.Label(entryName, ROCStyles.nameLabelStyle);
         GUILayout.FlexibleSpace();
-        button = GUILayout.Button(buttonStr, ROCStyles.ctrlBtnStyle);
+        button = GUILayout.Button(buttonStr, ROCStyles.ctrl_button);
         GUILayout.Label(value, ROCStyles.valueLabelStyle);
         GUILayout.Space(5);
         GUILayout.Label(unit, ROCStyles.unitLabelStyle);
@@ -696,8 +707,8 @@ public class ResonantOrbitCalculatorPlugin : BaseSpaceWarpPlugin
         GUILayout.BeginHorizontal();
         GUILayout.Label(entryName, ROCStyles.nameLabelStyle);
         GUILayout.FlexibleSpace();
-        button1 = GUILayout.Button(button1Str, ROCStyles.ctrlBtnStyle);
-        button2 = GUILayout.Button(button2Str, ROCStyles.ctrlBtnStyle);
+        button1 = GUILayout.Button(button1Str, ROCStyles.ctrl_button);
+        button2 = GUILayout.Button(button2Str, ROCStyles.ctrl_button);
         GUILayout.Label(value, ROCStyles.valueLabelStyle);
         GUILayout.Space(5);
         GUILayout.Label(unit, ROCStyles.unitLabelStyle);
@@ -707,11 +718,18 @@ public class ResonantOrbitCalculatorPlugin : BaseSpaceWarpPlugin
 
     private void DrawEntryTextField(string entryName, ref string textEntry, string unit = "")
     {
+        double num;
+        Color normal;
+
         GUILayout.BeginHorizontal();
         GUILayout.Label(entryName, ROCStyles.nameLabelStyle);
         GUILayout.FlexibleSpace();
+        normal = GUI.color;
+        bool parsed = double.TryParse(textEntry, out num);
+        if (!parsed) GUI.color = Color.red;
         GUI.SetNextControlName(entryName);
         textEntry = GUILayout.TextField(textEntry, ROCStyles.textInputStyle);
+        GUI.color = normal;
         GUILayout.Space(5);
         GUILayout.Label(unit, ROCStyles.unitLabelStyle);
         GUILayout.EndHorizontal();

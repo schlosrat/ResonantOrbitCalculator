@@ -286,7 +286,7 @@ public static GUIStyle slider_line, slider_node;
         setFromOn(tab_active);
     }
 
-    public static GUIStyle bigicon_button, icon_button, small_button, big_button, button, ctrlBtnStyle;
+    public static GUIStyle bigicon_button, icon_button, small_button, big_button, button, ctrl_button;
 
     static void BuildButtons()
     {
@@ -348,7 +348,7 @@ public static GUIStyle slider_line, slider_node;
         bigicon_button.fixedHeight = 50;
         bigicon_button.fontStyle = FontStyle.Bold;
 
-        ctrlBtnStyle = new GUIStyle(GUI.skin.GetStyle("Button")) // was: _spaceWarpUISkin.button)
+        ctrl_button = new GUIStyle(GUI.skin.GetStyle("Button")) // was: _spaceWarpUISkin.button)
         {
             alignment = TextAnchor.MiddleCenter,
             padding = new RectOffset(0, 0, 0, 3),
@@ -359,6 +359,17 @@ public static GUIStyle slider_line, slider_node;
             clipping = TextClipping.Overflow,
             margin = new RectOffset(0, 0, 10, 0)
         };
+        ctrl_button.normal.background = AssetsLoader.loadIcon("Small_Button");
+        setAllFromNormal(ctrl_button);
+        ctrl_button.hover.background = AssetsLoader.loadIcon("Small_Button_hover");
+        ctrl_button.active.background = AssetsLoader.loadIcon("Small_Button_active");
+        ctrl_button.onNormal = ctrl_button.active;
+        setFromOn(ctrl_button);
+
+        // ctrl_button.border = new RectOffset(5, 5, 5, 5);
+        // ctrl_button.padding = new RectOffset(0, 0, 0, 0);
+        // ctrl_button.overflow = new RectOffset(0, 0, 0, 0);
+        // ctrl_button.alignment = TextAnchor.MiddleCenter;
 
     }
     public static GUIStyle foldout_close, foldout_open;
@@ -388,7 +399,7 @@ public static GUIStyle slider_line, slider_node;
     }
 
 
-    public static GUIStyle toggle, sectionToggleStyle;
+    public static GUIStyle toggle, section_toggle;
     static void BuildToggle()
     {
         // Toggle Button
@@ -408,10 +419,18 @@ public static GUIStyle slider_line, slider_node;
         toggle.padding = new RectOffset(34, 16, 0, 0);
         toggle.overflow = new RectOffset(0, 0, 0, 2);
 
-        sectionToggleStyle = new GUIStyle(GUI.skin.GetStyle("Toggle")); // was (_spaceWarpUISkin.toggle)
-        //{
-        //    padding = new RectOffset(14, 0, 3, 3)
-        //};
+        section_toggle = new GUIStyle(toggle) // GUI.skin.GetStyle("Toggle")) // was (_spaceWarpUISkin.toggle)
+        {
+            padding = new RectOffset(0, 0, 0, 3), // was: (14, 0, 3, 3)
+            fixedHeight = 16
+        };
+        //section_toggle.normal.background = AssetsLoader.loadIcon("Toggle_Off");
+        //section_toggle.normal.textColor = ColorTools.parseColor("#C0C1E2");
+        //setAllFromNormal(section_toggle);
+        //section_toggle.onNormal.background = AssetsLoader.loadIcon("Toggle_On");
+        //section_toggle.onNormal.textColor = ColorTools.parseColor("#C0E2DC");
+        //setFromOn(section_toggle);
+
     }
 
     public static void Init()
