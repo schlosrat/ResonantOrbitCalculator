@@ -228,14 +228,16 @@ public static GUIStyle slider_line, slider_node;
     }
 
     // icons
-    public static Texture2D gear, icon, mnc_icon, cross;
+    public static Texture2D gear, icon, fp_icon, mnc_icon, k2d2_icon, cross;
 
     static void BuildIcons()
     {
         // icons
         gear = AssetsLoader.loadIcon("gear");
         icon = AssetsLoader.loadIcon("icon");
-        // mnc_icon = AssetsLoader.loadIcon("icon_white_50"); //  mnc_icon_bw_50
+        fp_icon = AssetsLoader.loadIcon("fp_icon");
+        mnc_icon = AssetsLoader.loadIcon("mnc_big_icon");
+        k2d2_icon = AssetsLoader.loadIcon("k2d2_big_icon");
         cross = AssetsLoader.loadIcon("Cross");
     }
 

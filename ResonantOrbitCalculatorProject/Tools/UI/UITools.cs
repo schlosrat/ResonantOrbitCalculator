@@ -9,7 +9,6 @@ public class FoldOut
 {
     public delegate void onChapterUI();
 
-
     public class Chapter
     {
         public string Title;

@@ -1,10 +1,13 @@
 ﻿using BepInEx;
 using BepInEx.Logging;
+// using FlightPlan.UI;
+using FlightPlan;
 using HarmonyLib;
 using KSP.Game;
 using KSP.Sim.impl;
 using KSP.Sim.Maneuver;
 using KSP.UI.Binding;
+using MuMech;
 using ResonantOrbitCalculator.UI;
 using SpaceWarp;
 using SpaceWarp.API.Assets;
@@ -13,6 +16,7 @@ using SpaceWarp.API.UI;
 using SpaceWarp.API.UI.Appbar;
 using System.Reflection;
 using UnityEngine;
+using UnityEngine.UIElements;
 using static KSP.Rendering.Planets.PQSData;
 using static KSP.UI.Binding.Core.UIValue_ReadEnum_TextSet;
 // using Microsoft.CodeAnalysis.CSharp.Syntax;
@@ -62,12 +66,21 @@ public class ResonantOrbitCalculatorPlugin : BaseSpaceWarpPlugin
     // private double occModVac = 0.9;             // Double Occlusion Modifier for Vacuume
     // private string occModAtmStr = "0.75";       // String Occlusion Modifier for Atmosphere
     // private string occModVacStr = "0.9";        // String Occlusion Modifier for Vacuume 
-    private bool nSatUp, nSatDown, nOrbUp, nOrbDown, setTgtPe, setTgtAp, setTgtSync, setTgtSemiSync, setTgtMinLOS;
+    private bool nSatUp, nSatDown, nOrbUp, nOrbDown, setTgtPe, setTgtAp, setTgtSync, setTgtSemiSync, setTgtMinLOS, fixPe, fixAp;
     private double synchronousPeriod;           // Syncronous Orbital period about the main body (not sayin its even possible...)
     private double semiSynchronousPeriod;       // Semi-Syncronous Orbital period about the main body (not sayin its even possible...)
     private double synchronousAlt;              // Syncronous Orbital altitude about the main body (not sayin its even possible...)
     private double semiSynchronousAlt;          // Semi-Syncronous Orbital altitude about the main body (not sayin its even possible...)
     private double minLOSAlt;                   // Minimum LOS Orbit Altitude (only defined if 3 or more satellites in constelation)
+
+    // Dictionaries used for toggle button management to function like radio buttons. If no "radio buttons", then this can go.
+    private Dictionary<string, bool> _toggles = new();
+    private Dictionary<string, bool> _previousToggles = new();
+    private readonly Dictionary<string, bool> _initialToggles = new()
+    {
+        { "fixPe", false },
+        { "fixAp", false }
+    };
 
     // private readonly int windowWidth = 320;
     // private readonly int windowHeight = 700;
@@ -84,6 +97,8 @@ public class ResonantOrbitCalculatorPlugin : BaseSpaceWarpPlugin
     private VesselComponent activeVessel;
     // private SimulationObjectModel currentTarget;
     private ManeuverNodeData currentManeuver;
+    public ManeuverNodeData currentNode = null;
+
 
     // App bar button(s)
     private const string ToolbarFlightButtonID = "BTN-ResonantOrbitCalculatorFlight";
@@ -144,6 +159,10 @@ public class ResonantOrbitCalculatorPlugin : BaseSpaceWarpPlugin
         }
         loaded = true;
 
+        // Initialize the toggle button dictionaries
+        _toggles = new Dictionary<string, bool>(_initialToggles);
+        _previousToggles = new Dictionary<string, bool>(_initialToggles);
+
         gameObject.hideFlags = HideFlags.HideAndDontSave;
         DontDestroyOnLoad(gameObject);
 
@@ -154,34 +173,9 @@ public class ResonantOrbitCalculatorPlugin : BaseSpaceWarpPlugin
             AssetManager.GetAsset<Texture2D>($"{SpaceWarpMetadata.ModID}/images/icon.png"),
             ToggleButton);
 
-        //// Register OAB AppBar Button (not needed in this mod)
-        //Appbar.RegisterOABAppButton(
-        //    "Resonant Orbit Calculator",
-        //    ToolbarOABButtonID,
-        //    AssetManager.GetAsset<Texture2D>($"{SpaceWarpMetadata.ModID}/images/icon.png"),
-        //    delegate { showGUI = !showGUI; }
-        //);
-
-        // InitializeRects();
-        // ResetLayout();
-
         // Register all Harmony patches in the project
         Harmony.CreateAndPatchAll(typeof(ResonantOrbitCalculatorPlugin).Assembly);
 
-        // Boilerplate template stuff from munix - remove once we're certain the basic app functions!
-        // Try to get the currently active vessel, set its throttle to 100% and toggle on the landing gear
-        //try
-        //{
-        //    var currentVessel = Vehicle.ActiveVesselVehicle;
-        //    if (currentVessel != null)
-        //    {
-        //        // currentVessel.SetMainThrottle(1.0f);
-        //        currentVessel.SetGearState(true);
-        //    }
-        //}
-        //catch (Exception e) {}
-
-        // Put MicroEngineer-like layout state info into the configuration values?
         // Fetch a configuration value or create a default one if it does not exist
         var defaultValue = true;
         var diveConfig = Config.Bind<bool>("Settings section", "Diving Resonant Transfer Orbit", defaultValue, "Use a diving (vs. climbing) resonant transfer orbit");
@@ -196,7 +190,6 @@ public class ResonantOrbitCalculatorPlugin : BaseSpaceWarpPlugin
 
         diveOrbit = dive;
         occlusionModifiers = occlusion;
-
     }
     
     private void ToggleButton(bool toggle)
@@ -298,7 +291,6 @@ public class ResonantOrbitCalculatorPlugin : BaseSpaceWarpPlugin
                 gameInputState = true;
                 GameManager.Instance.Game.Input.Enable();
             }
-
         }
         else
         {
@@ -388,10 +380,12 @@ public class ResonantOrbitCalculatorPlugin : BaseSpaceWarpPlugin
         if ( TopButtons.IconButton(ROCStyles.cross))
             CloseWindow();
             
-        // Add a MNC icon to the upper left corner of the GUI
+        // Add a MNC_info icon to the upper left corner of the GUI
         GUI.Label(new Rect(9, 2, 29, 29), ROCStyles.icon, ROCStyles.icons_label);
 
-        GUILayout.Space(10);
+        // GUILayout.Space(10);
+
+        updateToggleButtons();
 
         FillParameters();
         FillCurrentOrbit();
@@ -402,16 +396,9 @@ public class ResonantOrbitCalculatorPlugin : BaseSpaceWarpPlugin
             FillManeuver();
         }
 
-        // Indication to User that its safe to type, or why vessel controls aren't working
-        GUILayout.BeginHorizontal();
-        string inputStateString = gameInputState ? "<b>Enabled</b>" : "<b>Disabled</b>";
-        GUILayout.Label("Game Input: ", ROCStyles.label);
-        if (gameInputState)
-            GUILayout.Label(inputStateString, ROCStyles.label);
-        else
-            GUILayout.Label(inputStateString, ROCStyles.warning);
-        GUILayout.FlexibleSpace();
-        GUILayout.EndHorizontal();
+        UI_Tools.Separator();
+
+        DrawGUIStatus();
 
         GUI.DragWindow(new Rect(0, 0, windowWidth, windowHeight));
     }
@@ -512,9 +499,110 @@ public class ResonantOrbitCalculatorPlugin : BaseSpaceWarpPlugin
         handleButtons();
     }
 
+    // This method sould be called at the top of FillWindow to enable toggle buttons to work like radio buttons
+    private void updateToggleButtons()
+    {
+        // Make toggle buttons behave like radio buttons
+        int numChecked = _toggles.Count(item => item.Value); // how many are selected now (could be 0, 1, or 2)
+        int oldNumChecked = _previousToggles.Count(item => item.Value); // how many were selected before (could be 0 or 1)
+        if (numChecked == 0)
+        {
+            if (oldNumChecked > 0) // if the selected action has been deselected
+                _previousToggles = new Dictionary<string, bool>(_initialToggles);
+        }
+        else if (numChecked == 1)
+        {
+            if (oldNumChecked == 0) // We gone from none selected to 1 selected
+            {
+                var selected = _toggles.FirstOrDefault(item => item.Value).Key;
+                _previousToggles[selected] = true; // record the new selection in the previous list
+            }
+            else if (oldNumChecked == 1) // they should be the same, let's check
+            {
+                var oldSelected = _previousToggles.FirstOrDefault(item => item.Value).Key;
+                var newSelected = _toggles.FirstOrDefault(item => item.Value).Key;
+                if (oldSelected != newSelected)
+                {
+                    Logger.LogWarning($"Selection Mismatch: Previously {oldSelected} was selected, but now {newSelected} is selected. Correcting previous list.");
+                    _previousToggles[oldSelected] = false; // update the previous list to deselect the previous selection
+                    _previousToggles[newSelected] = true;  // update the previous list to select the new selection
+                }
+            }
+            else // We shouldn't get here, but if there's more than one thing selected in the previous list and only one in the current list then fix it
+            {
+                _previousToggles = new Dictionary<string, bool>(_initialToggles);
+                var newSelected = _toggles.FirstOrDefault(item => item.Value).Key;
+                _previousToggles[newSelected] = true;
+            }
+        }
+        else if (numChecked == 2)
+        {
+            if (oldNumChecked == 0) // This should not happen, report it and clear everything
+            {
+                Logger.LogError($"Selection Mismatch: Two or more things selected with zero previously. Resetting all.");
+                _toggles = new Dictionary<string, bool>(_initialToggles);
+                _previousToggles = new Dictionary<string, bool>(_initialToggles);
+                clearToggleStates();
+            }
+            else if (oldNumChecked == 1) // We've selected something new
+            {
+                var oldSelected = _previousToggles.FirstOrDefault(item => item.Value).Key;
+                _toggles[oldSelected] = false; // deselect the previous selection
+                setToggleState(oldSelected, false);
+                var newSelected = _toggles.FirstOrDefault(item => item.Value).Key;
+                _previousToggles[newSelected] = true; // update the previous list to select the new selection
+            }
+            else // We shouldn't get here, but if there's more than one thing selected in the previous list and two in the current list then clear everything
+            {
+                Logger.LogError($"Selection Mismatch: Two or more things selected with two or more previously. Resetting all.");
+                _toggles = new Dictionary<string, bool>(_initialToggles);
+                _previousToggles = new Dictionary<string, bool>(_initialToggles);
+                clearToggleStates();
+            }
+        }
+        else // We should not be able to get here! Deselect everything...
+        {
+            Logger.LogError($"Selection Mismatch: More than two things selected! Resetting all.");
+            _toggles = new Dictionary<string, bool>(_initialToggles);
+            _previousToggles = new Dictionary<string, bool>(_initialToggles);
+            clearToggleStates();
+        }
+
+        // Make toggle buttons behave like radio buttons
+        numChecked = _toggles.Count(item => item.Value); // how many are selected now (could be 0, 1)
+        oldNumChecked = _previousToggles.Count(item => item.Value); // how many were selected before (should match numChecked)
+        string selectedAction = null;
+        if (numChecked == 1)
+            selectedAction = _toggles.FirstOrDefault(item => item.Value).Key;
+        else if (numChecked > 1)
+        {
+            Logger.LogError($"Selection Mismatch: Two or more things selected after update. Resetting all.");
+            _toggles = new Dictionary<string, bool>(_initialToggles);
+            _previousToggles = new Dictionary<string, bool>(_initialToggles);
+            clearToggleStates();
+        }
+    }
+
+    // This method is called by updateToggleButtons to set the sate of a toggle button
+    private void setToggleState(string key, bool value)
+    {
+        if (key == "fixPe")
+            fixPe = value;
+        if (key == "fixAp")
+            fixAp = value;
+    }
+
+    // This method is called by updateToggleButtons to clear the state of all toggle buttons
+    private void clearToggleStates()
+    {
+        fixPe = false;
+        fixAp = false;
+    }
+
+
     private void handleButtons()
     {
-        if (nSatDown || nSatUp || nOrbDown || nOrbUp || setTgtPe || setTgtAp || setTgtSync || setTgtSemiSync || setTgtMinLOS)
+        if (nSatDown || nSatUp || nOrbDown || nOrbUp || setTgtPe || setTgtAp || setTgtSync || setTgtSemiSync || setTgtMinLOS || fixPe || fixAp)
         {
             // burnParams = Vector3d.zero;
             if (nSatDown && ROCSettings.num_sats > 2)
@@ -539,43 +627,47 @@ public class ResonantOrbitCalculatorPlugin : BaseSpaceWarpPlugin
             }
             else if (setTgtPe)
             {
-                Logger.LogInfo($"handleButtons: Setting tgt_altitude_km to Periapsis {activeVessel.Orbit.PeriapsisArl / 1000.0} km");
-                target_alt_km = activeVessel.Orbit.PeriapsisArl/1000.0;
+                // Logger.LogInfo($"handleButtons: Setting tgt_altitude_km to Periapsis {activeVessel.Orbit.PeriapsisArl / 1000.0} km");
+                target_alt_km = activeVessel.Orbit.PeriapsisArl / 1000.0;
                 targetAltitude = target_alt_km.ToString("N3");
-                Logger.LogInfo($"handleButtons: tgt_altitude_km set to {targetAltitude} km");
+                // Logger.LogInfo($"handleButtons: tgt_altitude_km set to {targetAltitude} km");
             }
             else if (setTgtAp)
             {
-                Logger.LogInfo($"handleButtons: Setting tgt_altitude_km to Apoapsis {activeVessel.Orbit.ApoapsisArl / 1000.0} km");
-                target_alt_km = activeVessel.Orbit.ApoapsisArl/1000.0;
+                // Logger.LogInfo($"handleButtons: Setting tgt_altitude_km to Apoapsis {activeVessel.Orbit.ApoapsisArl / 1000.0} km");
+                target_alt_km = activeVessel.Orbit.ApoapsisArl / 1000.0;
                 targetAltitude = target_alt_km.ToString("N3");
-                Logger.LogInfo($"handleButtons: tgt_altitude_km set to {targetAltitude} km");
+                // Logger.LogInfo($"handleButtons: tgt_altitude_km set to {targetAltitude} km");
 
             }
             else if (setTgtSync)
             {
-                Logger.LogInfo($"handleButtons: Setting tgt_altitude_km to synchronousAlt {synchronousAlt / 1000.0} km");
-                target_alt_km = synchronousAlt/1000.0;
+                // Logger.LogInfo($"handleButtons: Setting tgt_altitude_km to synchronousAlt {synchronousAlt / 1000.0} km");
+                target_alt_km = synchronousAlt / 1000.0;
                 targetAltitude = target_alt_km.ToString("N3");
-                Logger.LogInfo($"handleButtons: tgt_altitude_km set to {targetAltitude} km");
+                // Logger.LogInfo($"handleButtons: tgt_altitude_km set to {targetAltitude} km");
 
             }
             else if (setTgtSemiSync)
             {
-                Logger.LogInfo($"handleButtons: Setting tgt_altitude_km to semiSynchronousAlt {semiSynchronousAlt / 1000.0} km");
-                target_alt_km = semiSynchronousAlt/1000.0;
+                // Logger.LogInfo($"handleButtons: Setting tgt_altitude_km to semiSynchronousAlt {semiSynchronousAlt / 1000.0} km");
+                target_alt_km = semiSynchronousAlt / 1000.0;
                 targetAltitude = target_alt_km.ToString("N3");
-                Logger.LogInfo($"handleButtons: tgt_altitude_km set to {targetAltitude} km");
+                // Logger.LogInfo($"handleButtons: tgt_altitude_km set to {targetAltitude} km");
 
             }
             else if (setTgtMinLOS)
             {
-                Logger.LogInfo($"handleButtons: Setting tgt_altitude_km to minLOSAlt {minLOSAlt / 1000.0} km");
-                target_alt_km = minLOSAlt/1000.0;
+                // Logger.LogInfo($"handleButtons: Setting tgt_altitude_km to minLOSAlt {minLOSAlt / 1000.0} km");
+                target_alt_km = minLOSAlt / 1000.0;
                 targetAltitude = target_alt_km.ToString("N3");
-                Logger.LogInfo($"handleButtons: tgt_altitude_km set to {targetAltitude} km");
+                // Logger.LogInfo($"handleButtons: tgt_altitude_km set to {targetAltitude} km");
 
             }
+            if (fixPe)
+                _toggles["fixPe"] = true;
+            if (fixAp)
+                _toggles["fixAp"] = true;
         }
     }
     
@@ -619,8 +711,8 @@ public class ResonantOrbitCalculatorPlugin : BaseSpaceWarpPlugin
         }
         double ce = (Ap2 - Pe2)/(Ap2 + Pe2);
         DrawEntry("Period", $"{SecondsToTimeString(xferPeriod)}", "s");
-        DrawEntry("Apoapsis", $"{MetersToDistanceString(Ap2 - activeVessel.mainBody.radius/1000)}", "km");
-        DrawEntry("Periapsis", $"{MetersToDistanceString(Pe2 - activeVessel.mainBody.radius/1000)}", "km");
+        DrawEntry("Apoapsis", $"{MetersToDistanceString((Ap2 - activeVessel.mainBody.radius)/1000)}", "km");
+        DrawEntry("Periapsis", $"{MetersToDistanceString((Pe2 - activeVessel.mainBody.radius)/1000)}", "km");
         DrawEntry("Eccentricity", ce.ToString("N3"), " ");
         double dV = burnCalc(sSMA, sSMA, 0, Ap2, SMA2, ce, activeVessel.mainBody.gravParameter);
         DrawEntry("Injection Δv", dV.ToString("N3"), "m/s");
@@ -643,14 +735,21 @@ public class ResonantOrbitCalculatorPlugin : BaseSpaceWarpPlugin
         DrawSectionEnd();
     }
 
-    private void DrawSoloToggle(string sectionNamem, ref bool toggle)
+    private void DrawToggleButton(string runString, ref bool button, string stopString = "")
     {
-        GUILayout.Space(5);
+        if (stopString.Length < 1)
+            stopString = runString;
+        button = UI_Tools.ToggleButton(button, runString, stopString);
+    }
+
+    private void DrawSoloToggle(string toggleStr, ref bool toggle)
+    {
+        GUILayout.Space(ROCStyles.spacingAfterSection);
         GUILayout.BeginHorizontal();
-        toggle = GUILayout.Toggle(toggle, sectionNamem, ROCStyles.toggle); // was section_toggle
+        toggle = GUILayout.Toggle(toggle, toggleStr, ROCStyles.toggle); // was section_toggle
         GUILayout.FlexibleSpace();
         GUILayout.EndHorizontal();
-        GUILayout.Space(-5);
+        GUILayout.Space(-ROCStyles.spacingAfterSection);
     }
 
     private void DrawSectionHeader(string sectionName, string value = "", string units = "") // was (string sectionName, ref bool isPopout, string value = "")
@@ -789,6 +888,104 @@ public class ResonantOrbitCalculatorPlugin : BaseSpaceWarpPlugin
         //{
             GUILayout.Space(ROCStyles.spacingAfterSection);
         //}
+    }
+
+    public ROCOtherModsInterface other_mods = null;
+
+    private void DrawGUIStatus() // double UT
+    {
+        //// Indicate status of last GUI function
+        //float transparency = 1;
+        //if (UT > statusTime) transparency = (float)MuUtils.Clamp(1 - (UT - statusTime) / statusFadeTime.Value, 0, 1);
+
+        //var status_style = FPStyles.status;
+        ////if (status == Status.VIRGIN)
+        ////    status_style = FPStyles.label;
+        //if (status == Status.OK)
+        //    status_style.normal.textColor = new Color(0, 1, 0, transparency); // FPStyles.phase_ok;
+        //if (status == Status.WARNING)
+        //    status_style.normal.textColor = new Color(1, 1, 0, transparency); // FPStyles.phase_warning;
+        //if (status == Status.ERROR)
+        //    status_style.normal.textColor = new Color(1, 0, 0, transparency); // FPStyles.phase_error;
+
+        double errorPe = (Pe2 - activeVessel.Orbit.Periapsis) / 1000;
+        double errorAp = (Ap2 - activeVessel.Orbit.Apoapsis) / 1000;
+        string fixPeStr, fixApStr;
+
+        GUILayout.Space(-ROCStyles.spacingAfterSection);
+
+        if (errorPe > 0)
+            fixPeStr = $"Raise Pe by {errorPe:N2} km to {((Pe2 - activeVessel.mainBody.radius) / 1000):N2} km";
+        else
+            fixPeStr = $"Lower Pe by {(-errorPe):N2} km to {((Pe2 - activeVessel.mainBody.radius) / 1000):N2} km";
+        if (errorAp > 0)
+            fixApStr = $"Raise Ap by {errorAp:N2} km to {((Ap2 - activeVessel.mainBody.radius) / 1000):N2} km";
+        else
+            fixApStr = $"Lower Ap by {(-errorAp):N2} km to {((Ap2 - activeVessel.mainBody.radius) / 1000):N2} km";
+        if (activeVessel.Orbit.Apoapsis < Pe2)
+        {
+            DrawSoloToggle(fixApStr, ref fixAp);
+            fixPe = false;
+            _toggles["fixPe"] = false;
+        }
+        else if (activeVessel.Orbit.Periapsis > Ap2)
+        {
+            DrawSoloToggle(fixPeStr, ref fixPe);
+            fixAp = false;
+            _toggles["fixAp"] = false;
+        }
+        else
+        {
+            DrawSoloToggle(fixPeStr, ref fixPe);
+            DrawSoloToggle(fixApStr, ref fixAp);
+        }
+
+        GUILayout.Space(ROCStyles.spacingAfterSection);
+
+        UI_Tools.Separator();
+        //DrawSectionHeader("Status:", statusText, status_style);
+
+        // Indication to User that its safe to type, or why vessel controls aren't working
+
+        if (other_mods == null)
+        {
+            // init mode detection only when first needed
+            other_mods = new ROCOtherModsInterface();
+            other_mods.CheckModsVersions();
+        }
+
+        other_mods.OnGUI(currentNode);
+        // GUILayout.Space(ROCStyles.spacingAfterEntry);
+
+        UI_Tools.Separator();
+
+        // Indication to User that its safe to type, or why vessel controls aren't working
+        GUILayout.BeginHorizontal();
+        string inputStateString = gameInputState ? "<b>Enabled</b>" : "<b>Disabled</b>";
+        GUILayout.Label("Game Input: ", ROCStyles.label);
+        if (gameInputState)
+            GUILayout.Label(inputStateString, ROCStyles.label);
+        else
+            GUILayout.Label(inputStateString, ROCStyles.warning);
+        GUILayout.FlexibleSpace();
+        GUILayout.EndHorizontal();
+    }
+
+    public void MakeNode()
+    {
+        if (other_mods.FPLoaded && other_mods.NMLoaded)
+        {
+            if (fixPe)
+            {
+                other_mods.SetNewPe(activeVessel.Orbit.TimeToAp + Game.UniverseModel.UniversalTime, Pe2, -0.5);
+                // FlightPlanPlugin.Instance.SetNewPe(activeVessel.Orbit.TimeToAp + Game.UniverseModel.UniversalTime, Pe2, -0.5);
+            }
+            else if (fixAp)
+            {
+                other_mods.SetNewAp(activeVessel.Orbit.TimeToPe + Game.UniverseModel.UniversalTime, Ap2, -0.5);
+                // FlightPlanPlugin.Instance.SetNewAp(activeVessel.Orbit.TimeToPe + Game.UniverseModel.UniversalTime, Ap2, -0.5);
+            }
+        }
     }
 
     private string SituationToString(VesselSituations situation)
