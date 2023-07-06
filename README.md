@@ -12,6 +12,9 @@ Making resonant orbit planning easier for Kerbal Space Program 2 one mission at 
 * Model Resonant Deployment Orbit
 * Display effects of the next planned Maneuver
 * Automatically disables keyboard input to the game when you've clicked into a text entry field - automatically re-enabling game input once you've clicked anywhere else
+
+**Note:** Version 0.5.0 received significant updates and improvements in the GUI based entirely on the work of [cfloutier](https://github.com/cfloutier) who richly deserves the credit for those parts. His contributions to the Flight Plan mod have spilled over to positively impact this and other mods as well.
+
 ## Planned Improvements
 To see what improvements and new features are planned for this mod, you can visit the Issues page on the project's GitHub.
 ## Installation
