@@ -476,7 +476,7 @@ public static GUIStyle slider_line, slider_node;
     /// <returns></returns>
     private static GUISkin CopySkin(GUISkin source)
     {
-        var copy = new GUISkin();
+        var copy = ScriptableObject.CreateInstance<GUISkin>(); // new GUISkin();
         copy.font = source.font;
         copy.box = new GUIStyle(source.box);
         copy.label = new GUIStyle(source.label);
