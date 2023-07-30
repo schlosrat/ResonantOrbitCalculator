@@ -4,7 +4,7 @@
   "name": "Resonant Orbit Calculator",
   "description": "Calculate resonant orbits for the selected vessel and assit with setting up maneuver nodes to enter the resonant orbit",
   "source": "https://github.com/schlosrat/ResonantOrbitCalculator",
-  "version": "0.6.0",
+  "version": "0.6.1",
   "spec": "1.3",
   "version_check": "https://raw.githubusercontent.com/schlosrat/ResonantOrbitCalculator/master/resonant_orbit_calculator/swinfo.json",
   "dependencies": [
