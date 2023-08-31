@@ -697,7 +697,7 @@ public class ResonantOrbitCalculatorPlugin : BaseSpaceWarpPlugin
     DrawEntry("Time to Pe.", $"{SecondsToTimeString(activeVessel.Orbit.TimeToPe)}", "s");
     DrawEntry("Inclination", $"{activeVessel.Orbit.inclination:N3}", "°");
     DrawEntry("Eccentricity", $"{activeVessel.Orbit.eccentricity:N3}", " ");
-    double secondsToSoiTransition = activeVessel.Orbit.UniversalTimeAtSoiEncounter - GameManager.Instance.Game.UniverseModel.UniversalTime;
+    double secondsToSoiTransition = activeVessel.Orbit.UniversalTimeAtSoiEncounter - GameManager.Instance.Game.UniverseModel.UniverseTime;
     if (secondsToSoiTransition >= 0)
     {
       DrawEntry("SOI Trans.", SecondsToTimeString(secondsToSoiTransition), "s");
@@ -744,7 +744,7 @@ public class ResonantOrbitCalculatorPlugin : BaseSpaceWarpPlugin
     DrawEntry("Projected Ap.", MetersToDistanceString(newOrbit.ApoapsisArl / 1000), "km");
     DrawEntry("Projected Pe.", MetersToDistanceString(newOrbit.PeriapsisArl / 1000), "km");
     DrawEntry("∆v required", $"{currentManeuver.BurnRequiredDV:N1}", "m/s");
-    double timeUntilNode = currentManeuver.Time - GameManager.Instance.Game.UniverseModel.UniversalTime;
+    double timeUntilNode = currentManeuver.Time - GameManager.Instance.Game.UniverseModel.UniverseTime;
     DrawEntry("Time to", SecondsToTimeString(timeUntilNode), "s");
     DrawEntry("Burn Time", SecondsToTimeString(currentManeuver.BurnDuration), "s");
 
@@ -993,13 +993,13 @@ public class ResonantOrbitCalculatorPlugin : BaseSpaceWarpPlugin
     {
       if (fixPe)
       {
-        other_mods.SetNewPe(activeVessel.Orbit.TimeToAp + Game.UniverseModel.UniversalTime, Pe2, -0.5);
-        // FlightPlanPlugin.Instance.SetNewPe(activeVessel.Orbit.TimeToAp + Game.UniverseModel.UniversalTime, Pe2, -0.5);
+        other_mods.SetNewPe(activeVessel.Orbit.TimeToAp + Game.UniverseModel.UniverseTime, Pe2, -0.5);
+        // FlightPlanPlugin.Instance.SetNewPe(activeVessel.Orbit.TimeToAp + Game.UniverseModel.UniverseTime, Pe2, -0.5);
       }
       else if (fixAp)
       {
-        other_mods.SetNewAp(activeVessel.Orbit.TimeToPe + Game.UniverseModel.UniversalTime, Ap2, -0.5);
-        // FlightPlanPlugin.Instance.SetNewAp(activeVessel.Orbit.TimeToPe + Game.UniverseModel.UniversalTime, Ap2, -0.5);
+        other_mods.SetNewAp(activeVessel.Orbit.TimeToPe + Game.UniverseModel.UniverseTime, Ap2, -0.5);
+        // FlightPlanPlugin.Instance.SetNewAp(activeVessel.Orbit.TimeToPe + Game.UniverseModel.UniverseTime, Ap2, -0.5);
       }
     }
   }

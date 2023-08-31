@@ -224,7 +224,7 @@ public class ROCOtherModsInterface
 
                 if (k2d2Status == "Done" && NMLoaded)
                 {
-                    if (NodeManagerPlugin.Instance.currentNode.Time < GameManager.Instance.Game.UniverseModel.UniversalTime)
+                    if (NodeManagerPlugin.Instance.currentNode.Time < GameManager.Instance.Game.UniverseModel.UniverseTime)
                     {
                         NodeManagerPlugin.Instance.DeleteNodes(0);
                     }
