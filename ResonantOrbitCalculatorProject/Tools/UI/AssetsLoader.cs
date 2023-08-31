@@ -10,7 +10,7 @@ namespace ResonantOrbitCalculator.UI
         public static Texture2D loadIcon(string path)
         {
             // TODO : change the hardcoded path flight_plan
-            string full_path = $"resonant_orbit_calculator/images/{path}.png";
+            string full_path = $"com.github.schlosrat.resonant_orbit_calculator/images/{path}.png";
             var imageTexture = AssetManager.GetAsset<Texture2D>(full_path);
 
             //   Check if the texture is null
