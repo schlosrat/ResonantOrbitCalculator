@@ -8,7 +8,7 @@
         <AssemblyName>com.github.schlosrat.resonant_orbit_calculator</AssemblyName>
         <Product>Resonant Orbit Calculator</Product>
         <Description>Calculates resonant orbits for the selected vessel and assit with setting up maneuver nodes to enter the resonant orbit</Description>
-        <Version Label="Version of the mod">0.6.1</Version>
+        <Version Label="Version of the mod">0.6.2</Version>
         <RestoreAdditionalProjectSources>
 			https://nuget.spacewarp.org/v3/index.json
 		</RestoreAdditionalProjectSources>
@@ -21,15 +21,11 @@
         <PackageReference Include="BepInEx.Core" Version="5.*" />
         <PackageReference Include="BepInEx.PluginInfoProps" Version="2.*" />
         <PackageReference Include="HarmonyX" Version="2.10.1" />
-        <PackageReference Include="SpaceWarp" Version="1.1.1" />
-        <PackageReference Include="UnityEngine.Modules" Version="2020.3.33" IncludeAssets="compile" />
+        <PackageReference Include="SpaceWarp" Version="1.4.0" />
+        <PackageReference Include="UnityEngine.Modules" Version="2020.3.33.1" IncludeAssets="compile" />
+        <PackageReference Include="KerbalSpaceProgram2.GameLibs" Version="0.1.4" />
     </ItemGroup>
     <ItemGroup>
-        <Reference Include="Assembly-CSharp">
-            <HintPath>..\external_dlls\Assembly-CSharp.dll</HintPath>
-            <Publicize>true</Publicize>
-            <Private>false</Private>
-        </Reference>
 		<Reference Include="flight_plan">
 			<HintPath>..\external_dlls\flight_plan.dll</HintPath>
 			<Private>false</Private>
